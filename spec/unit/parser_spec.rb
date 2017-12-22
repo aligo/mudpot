@@ -68,6 +68,9 @@ describe Mudpot::Parser do
   end
 
   it 'can parse simple operator invoking' do
+    expect('do1()').to ast([:do1])
+    expect('nil1()').to ast([:nil1])
+    expect('scope_get()').to compiled([120])
     expect('scope_get(1)').to compiled([120, 1])
     expect("scope_get(1, '2', 3.3)").to compiled([120, 1, '2', 3.3])
     expect("
@@ -128,6 +131,23 @@ describe Mudpot::Parser do
     expect("$var |> list_nth |> list_nth").to ast([:list_nth, [:list_nth, [:scope_get, 'var']]])
     expect("$var |> list_nth(1) |> list_nth(2)").to ast([:list_nth, [:list_nth, [:scope_get, 'var'], 1], 2])
     expect("$var |> list_nth(1, 2) |> list_nth(3, 4)").to ast([:list_nth, [:list_nth, [:scope_get, 'var'], 1, 2], 3, 4])
+  end
+
+  it 'can parse lambda' do
+    expect("-> do $3 end").to ast([:lambda_lambda, [:scope_arg, 3]])
+    expect("""
+      -> do
+        $0
+        $1
+      end
+    """).to compiled([130, [[122, 0], [122, 1]]])
+
+    expect("""
+      ($arg1, $arg2) -> do
+        $arg1
+        $arg2
+      end
+    """).to compiled([130, [500, 'arg1', 'arg2'], [[120, 'arg1'], [120, 'arg2']]])
   end
 
 end
