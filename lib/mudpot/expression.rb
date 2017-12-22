@@ -22,6 +22,11 @@ module Mudpot
       self
     end
 
+    def set_arg(i, v)
+      @args[i] = v
+      self
+    end
+
     def lambda(*args)
       @args = args
       @operator = @operators['lambda_lambda']
