@@ -13,17 +13,46 @@ describe Mudpot::Parser do
     expect("@[]").to compiled([500])
     expect("@[1, nil, 3]").to compiled([500, 1, nil, 3])
 
-    expect("@[
-      1
-      nil
-      3
-    ]").to compiled([500, 1, nil, 3])
+    expect("""
+      @[
+      ]
+    """).to compiled([500])
 
-    expect("@[
-      1,
-      nil
-      3
-    ]").to compiled([500, 1, nil, 3])
+    expect("""
+      @[
+        1
+      ]
+    """).to compiled([500, 1])
+
+    expect("""
+      @[
+        1
+        nil
+        3
+      ]
+    """).to compiled([500, 1, nil, 3])
+
+    expect("""
+      @[
+        1,
+        nil
+        3
+      ]
+    """).to compiled([500, 1, nil, 3])
+
+    expect("""
+      @[
+        1,nil
+        3
+      ]
+      """).to compiled([500, 1, nil, 3])
+
+    expect("""
+      @[
+        1,nil
+        3
+      ]
+      """).to compiled([500, 1, nil, 3])
   end
 
   it 'can parse list nth' do
@@ -41,11 +70,19 @@ describe Mudpot::Parser do
     expect("@{'key': 'value'}").to compiled([600, 'key', 'value'])
     expect("@{'key': 'value', 'key2': 'value2'}").to compiled([600, 'key', 'value', 'key2', 'value2'])
 
-    expect("@{
-      'key': 'value'
-      'key2': 'value2',
-      'key3': 'value3'
-    }").to compiled([600, 'key', 'value', 'key2', 'value2', 'key3', 'value3'])
+    expect("""
+      @{
+        'key': 'value'
+        'key2': 'value2',
+        'key3': 'value3'
+      }
+    """).to compiled([600, 'key', 'value', 'key2', 'value2', 'key3', 'value3'])
+
+    expect("""
+      @{
+        'key': 'value'
+      }
+    """).to compiled([600, 'key', 'value'])
 
     expect("@{'key': 'value', 'key': 'value2'}").to compiled([600, 'key', 'value2'])
 
@@ -125,6 +162,7 @@ describe Mudpot::Parser do
 
      expect("$cloud.page.var").to ast([:cloud_scope_page_get, 'var'])
      expect("$cloud.page.var = scope_get(2)").to ast([:cloud_scope_page_set, 'var', [:scope_get, 2]])
+     expect("$cloud.page.var ||= scope_get(2)").to ast([:cloud_scope_page_init, 'var', [:scope_get, 2]])
   end
 
   it 'can parse pipeline' do
