@@ -19,6 +19,7 @@ module Mudpot
     rule('}')
     rule(':')
 
+
     rule(:nil => 'nil' ).as { nil }
     rule(:do => 'do' )
     rule(:end => 'end' )
@@ -32,13 +33,19 @@ module Mudpot
     rule(:single_quoted_string => /'[^']*'/).as {|s| s[1..-2] }
 
     rule(:list) do |r|
-      r['@', '[', ']'].as { |_, _, _| Expression.new.list_list }
-      r['@', '[', :args, ']'].as { |_, _, args, _| Expression.new.list_list(*args) }
+      r['@', '[', ']'].as                   { |_, _, _|             Expression.new.list_list }
+      r['@', '[', :lb, :args, :lb, ']'].as  { |_, _, _, args, _, _| Expression.new.list_list(*args) }
+      r['@', '[', :args, :lb, ']'].as       { |_, _, args, _, _|    Expression.new.list_list(*args) }
+      r['@', '[', :lb, :args, ']'].as       { |_, _, _, args, _|    Expression.new.list_list(*args) }
+      r['@', '[', :args, ']'].as            { |_, _, args, _|       Expression.new.list_list(*args) }
     end
 
     rule(:hash) do |r|
-      r['@', '{', '}'].as { |_, _, _| Expression.new.hash_table_ht }
-      r['@', '{', :hash_pairs, '}'].as { |_, _, hash_pair, _| Expression.new.hash_table_ht(*hash_pair.flat_map {|i| i }) }
+      r['@', '{', '}'].as                         { |_, _, _|                   Expression.new.hash_table_ht }
+      r['@', '{', :lb, :hash_pairs, :lb, '}'].as  { |_, _, _, hash_pair, _, _|  Expression.new.hash_table_ht(*hash_pair.flat_map {|i| i }) }
+      r['@', '{', :hash_pairs, :lb, '}'].as       { |_, _, hash_pair, _, _|     Expression.new.hash_table_ht(*hash_pair.flat_map {|i| i }) }
+      r['@', '{', :lb, :hash_pairs, '}'].as       { |_, _, hash_pair, _|        Expression.new.hash_table_ht(*hash_pair.flat_map {|i| i }) }
+      r['@', '{', :hash_pairs, '}'].as            { |_, _, hash_pair, _|        Expression.new.hash_table_ht(*hash_pair.flat_map {|i| i }) }
     end
 
     rule(:hash_pair) do |r|
@@ -46,15 +53,19 @@ module Mudpot
     end
 
     rule(:hash_pairs) do |r|
-      r[].as                  { [] }
-      r[:hash_pairs, ',', :hash_pair].as { |ht, _, i| ht.merge(i) }
-      r[:hash_pair].as             { |i| i }
+      r[].as                                  { [] }
+      r[:hash_pairs, ',', :lb, :hash_pair].as { |ht, _, _, i| ht.merge(i) }
+      r[:hash_pairs, ',', :hash_pair].as      { |ht, _, i|    ht.merge(i) }
+      r[:hash_pairs, :lb, :hash_pair].as      { |ht, _, i|    ht.merge(i) }
+      r[:hash_pair].as                        { |i| i }
     end
 
     rule(:args) do |r|
-      r[].as                  { [] }
-      r[:args, ',', :expr].as { |args, _, i| args << i }
-      r[:expr].as             { |i| [i] }
+      r[].as                        { [] }
+      r[:args, ',', :lb, :expr].as  { |args, _, _, i| args << i }
+      r[:args, ',', :expr].as       { |args, _, i|    args << i }
+      r[:args, :lb, :expr].as       { |args, _, i|    args << i }
+      r[:expr].as                   { |i| [i] }
     end
 
     rule(:expr) do |r|
