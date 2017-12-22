@@ -8,9 +8,16 @@ describe Mudpot::Parser do
     expect("'string'").to compiled('string')
   end
 
+  it 'can parse literal list' do
+    expect("@['this', 'is', 'list']").to compiled([500, 'this', 'is', 'list'])
+    expect("@[]").to compiled([500])
+    expect("@[1, nil, 3]").to compiled([500, 1, nil, 3])
+  end
+
   it 'can parse simple operator invoking' do
     expect('scope_get(1)').to compiled([120, 1])
     expect("scope_get(1, '2', 3.3)").to compiled([120, 1, '2', 3.3])
+    expect("scope_get(1, nil, 3.3, nil, 'nil')").to compiled([120, 1, nil, 3.3, nil, 'nil'])
 
     expect('scope_get(scope_get(scope_get(3)))').to compiled([120, [120, [120, 3]]])
     expect('scope_get(1, scope_get(2, scope_get(3)))').to compiled([120, 1, [120, 2, [120, 3]]])
@@ -23,20 +30,29 @@ describe Mudpot::Parser do
     """).to ast([[:scope_get, 2], [:scope_get, 1]])
 
     expect("""
-      scope_get(
-        scope_get(2)
-        scope_get(3)
-      )
+      scope_get(2)
+
+
       scope_get(1)
-    """).to ast([
-      [:scope_get, 
-        [
-          [:scope_get, 2], 
-          [:scope_get, 3]
-        ]
-      ], 
-      [:scope_get, 1]
-    ])
+    """).to ast([[:scope_get, 2], [:scope_get, 1]])
+  end
+
+  it 'can parse do...end exprs' do
+     expect("""do scope_get(1) end""").to ast([:scope_get, 1])
+     expect("""do scope_get(1); scope_get(2) end""").to ast([[:scope_get, 1],[:scope_get, 2]])
+     expect("""do
+        scope_get(1)
+        scope_get(2)
+      end
+    """).to ast([[:scope_get, 1],[:scope_get, 2]])
+     expect("""do
+        scope_get(1)
+        scope_get(do
+          scope_get(2)
+          scope_get(3)
+        end)
+      end
+    """).to ast([[:scope_get, 1],[:scope_get, [[:scope_get, 2],[:scope_get, 3]]]])
   end
 
 end
