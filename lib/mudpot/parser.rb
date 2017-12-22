@@ -20,6 +20,7 @@ module Mudpot
     rule(':')
     rule('$')
     rule('=')
+    rule('|>')
 
     rule(:nil => 'nil' ).as { nil }
     rule(:do => 'do' )
@@ -71,6 +72,11 @@ module Mudpot
       r[:hash_pair].as                        { |i| i }
     end
 
+    rule(:pipeline) do |r|
+      r['|>', :token].as                  { |_, operator|                 Expression.new.send(operator) }
+      r['|>', :token, '(', :args, ')'].as { |_, operator, _, args, _|     Expression.new.send(operator, *([nil] + args)) }
+    end
+
     rule(:args) do |r|
       r[].as                        { [] }
       r[:args, ',', :lb, :expr].as  { |args, _, _, i| args << i }
@@ -95,6 +101,7 @@ module Mudpot
       r[:do_exprs]
       r[:expr, :list_nth].as {|expr, list_nth| list_nth.set_arg(0, expr) }
       r[:expr, :hash_key].as {|expr, hash_key| hash_key.set_arg(0, expr) }
+      r[:expr, :pipeline].as {|expr, pipeline| pipeline.set_arg(0, expr) }
     end
 
     rule(:do_exprs) do |r|

@@ -30,6 +30,7 @@ describe Mudpot::Parser do
     expect("@['this', 'is', 'list'][1]").to compiled([502, [500, 'this', 'is', 'list'], 1])
     expect("$a[1]").to compiled([502, [120, 'a'], 1])
     expect("$a[$2]").to compiled([502, [120, 'a'], [122, 2]])
+    expect("$a[1][3]").to compiled([502, [502, [120, 'a'], 1], 3])
 
     expect("@['this', 'is', 'list'][1] = $3").to compiled([505, [500, 'this', 'is', 'list'], 1, [122, 3]])
     expect("$a[1] = $3").to compiled([505, [120, 'a'], 1, [122, 3]])
@@ -121,6 +122,12 @@ describe Mudpot::Parser do
 
      expect("$cloud.page.var").to ast([:cloud_scope_page_get, 'var'])
      expect("$cloud.page.var = scope_get(2)").to ast([:cloud_scope_page_set, 'var', [:scope_get, 2]])
+  end
+
+  it 'can parse pipeline' do
+    expect("$var |> list_nth |> list_nth").to ast([:list_nth, [:list_nth, [:scope_get, 'var']]])
+    expect("$var |> list_nth(1) |> list_nth(2)").to ast([:list_nth, [:list_nth, [:scope_get, 'var'], 1], 2])
+    expect("$var |> list_nth(1, 2) |> list_nth(3, 4)").to ast([:list_nth, [:list_nth, [:scope_get, 'var'], 1, 2], 3, 4])
   end
 
 end
