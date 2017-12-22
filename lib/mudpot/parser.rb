@@ -5,7 +5,7 @@ module Mudpot
   class Parser < Whittle::Parser
 
     rule(:wsp => /[ \t]+/).skip!
-    rule(:comment => /#.*$/m).skip!
+    rule(:comment => /#.*$/).skip!
     rule(:lb => /[\n\r\;]+/)
 
     rule('(')

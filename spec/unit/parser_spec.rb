@@ -133,6 +133,13 @@ describe Mudpot::Parser do
     expect("$var |> list_nth(1, 2) |> list_nth(3, 4)").to ast([:list_nth, [:list_nth, [:scope_get, 'var'], 1, 2], 3, 4])
   end
 
+  it 'can parse comment' do
+    expect("""
+      #comment1
+      $0 #comment2
+    """).to ast([:scope_arg, 0])
+  end
+
   it 'can parse lambda' do
     expect("-> do $3 end").to ast([:lambda_lambda, [:scope_arg, 3]])
     expect("""
