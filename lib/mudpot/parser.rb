@@ -4,6 +4,10 @@ require 'mudpot/expression'
 module Mudpot
   class Parser < Whittle::Parser
 
+    def self.op
+      Expression.new
+    end
+
     rule(:wsp => /[ \t]+/).skip!
     rule(:comment => /#.*$/).skip!
     rule(:lb => /[\n\r\;]+/)
@@ -38,23 +42,23 @@ module Mudpot
     rule(:single_quoted_string => /'[^']*'/).as { |s| s[1..-2] }
 
     rule(:list) do |r|
-      r['@', '[', ']'].as                   { |_, _, _|             Expression.new.list_list }
-      r['@', '[', :args, ']'].as            { |_, _, args, _|       Expression.new.list_list(*args) }
+      r['@', '[', ']'].as                   { |_, _, _|             op.list_list }
+      r['@', '[', :args, ']'].as            { |_, _, args, _|       op.list_list(*args) }
     end
 
     rule(:list_nth) do |r|
-      r['[', :expr, ']'].as                        { |_, i, _|                    Expression.new.list_nth  nil, i }
-      r['[', :expr, ']', '=', :expr].as            { |_, i, _, _, value|          Expression.new.list_push nil, i, value }
+      r['[', :expr, ']'].as                        { |_, i, _|                    op.list_nth  nil, i }
+      r['[', :expr, ']', '=', :expr].as            { |_, i, _, _, value|          op.list_push nil, i, value }
     end
 
     rule(:hash) do |r|
-      r['@', '{', '}'].as                         { |_, _, _|                   Expression.new.hash_table_ht }
-      r['@', '{', :hash_pairs, '}'].as            { |_, _, hash_pair, _|        Expression.new.hash_table_ht(*hash_pair.flat_map { |i| i }) }
+      r['@', '{', '}'].as                         { |_, _, _|                   op.hash_table_ht }
+      r['@', '{', :hash_pairs, '}'].as            { |_, _, hash_pair, _|        op.hash_table_ht(*hash_pair.flat_map { |i| i }) }
     end
 
     rule(:hash_key) do |r|
-      r['{', :expr, '}'].as                        { |_, i, _|                    Expression.new.hash_table_get nil, i }
-      r['{', :expr, '}', '=', :expr].as            { |_, i, _, _, value|          Expression.new.hash_table_set nil, i, value }
+      r['{', :expr, '}'].as                        { |_, i, _|                    op.hash_table_get nil, i }
+      r['{', :expr, '}', '=', :expr].as            { |_, i, _, _, value|          op.hash_table_set nil, i, value }
     end
 
     rule(:hash_pair) do |r|
@@ -69,13 +73,13 @@ module Mudpot
     end
 
     rule(:lambda) do |r|
-      r['->', :do_exprs].as                               { |_, exprs|                     Expression.new.lambda_lambda(exprs)}
-      r['(', :params, ')', '->', :do, :exprs, :end].as    { |_, params, _, _, _, exprs, _| Expression.new.lambda_lambda( Expression.new.list_list(*params), exprs)}
+      r['->', :do_exprs].as                               { |_, exprs|                     op.lambda_lambda(exprs)}
+      r['(', :params, ')', '->', :do, :exprs, :end].as    { |_, params, _, _, _, exprs, _| op.lambda_lambda( op.list_list(*params), exprs)}
     end
 
     rule(:pipeline) do |r|
-      r['|>', :token].as                  { |_, operator|                 Expression.new.send(operator) }
-      r['|>', :token, '(', :args, ')'].as { |_, operator, _, args, _|     Expression.new.send(operator, *([nil] + args)) }
+      r['|>', :token].as                  { |_, operator|                 op.send(operator) }
+      r['|>', :token, '(', :args, ')'].as { |_, operator, _, args, _|     op.send(operator, *([nil] + args)) }
     end
 
     rule(:params) do |r|
@@ -98,12 +102,13 @@ module Mudpot
     end
 
     rule(:scope_expr) do |r|
-      r['$', :int].as               { |_, i|                  Expression.new.scope_arg i }
-      r['$', :token].as             { |_, token|              Expression.new.scope_get token }
-      r['$', :token, '=', :expr].as { |_, token, _, value|    Expression.new.scope_set token, value }
-      r['$', :token, '.', :token, '.', :token].as                   { |_, bridge, _, namespace, _, token|               Expression.new.send(:"#{bridge}_scope_#{namespace}_get", token) }
-      r['$', :token, '.', :token, '.', :token, '=', :expr].as       { |_, bridge, _, namespace, _, token, _, value|     Expression.new.send(:"#{bridge}_scope_#{namespace}_set", token, value) }
-      r['$', :token, '.', :token, '.', :token, '||', '=', :expr].as { |_, bridge, _, namespace, _, token, _, _, value|  Expression.new.send(:"#{bridge}_scope_#{namespace}_init", token, value) }
+      r['$', :int].as               { |_, i|                  op.scope_arg i }
+      r['$', :token].as             { |_, token|              op.scope_get token }
+      r['$', :token, '=', :expr].as { |_, token, _, value|    op.scope_set token, value }
+      r['$', :token, '||', '=', :expr].as { |_, token, _, _, value|    op.cond_if(op.is_nil(op.scope_get(token)), op.scope_set(token, value)) }
+      r['$', :token, '.', :token, '.', :token].as                   { |_, bridge, _, namespace, _, token|               op.send(:"#{bridge}_scope_#{namespace}_get", token) }
+      r['$', :token, '.', :token, '.', :token, '=', :expr].as       { |_, bridge, _, namespace, _, token, _, value|     op.send(:"#{bridge}_scope_#{namespace}_set", token, value) }
+      r['$', :token, '.', :token, '.', :token, '||', '=', :expr].as { |_, bridge, _, namespace, _, token, _, _, value|  op.send(:"#{bridge}_scope_#{namespace}_init", token, value) }
     end
 
     rule(:literal_expr) do |r|
@@ -118,7 +123,7 @@ module Mudpot
 
     rule(:expr) do |r|
       r[:scope_expr]
-      r[:token, '(', :args, ')'].as { |operator, _, args, _|  Expression.new.send(operator, *args) }
+      r[:token, '(', :args, ')'].as { |operator, _, args, _|  op.send(operator, *args) }
       r[:literal_expr]
       r[:do_exprs]
       r[:expr, :list_nth].as { |expr, list_nth| list_nth.set_arg(0, expr) }
@@ -131,10 +136,10 @@ module Mudpot
     end
 
     rule(:exprs) do |r|
-      r[].as                  { Expression.new }
+      r[].as                  { op }
       r[:exprs, :lb]
       r[:exprs, :lb, :expr].as { |exprs, _, i| exprs + [i] }
-      r[:expr].as             { |i| Expression.new[i] }
+      r[:expr].as             { |i| op[i] }
     end
 
     start(:exprs)

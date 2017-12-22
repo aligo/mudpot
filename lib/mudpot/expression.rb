@@ -12,6 +12,10 @@ module Mudpot
       self
     end
 
+    def is_nil(arg)
+      Expression.new.compare_eq_to(Expression.new.cond_if, arg)
+    end
+
     def [](*args)
       @args += args
       self
@@ -53,10 +57,6 @@ module Mudpot
     def ast_with(arg, compile, operators)
       if arg.is_a? Expression
         arg.ast(compile, operators)
-      # elsif arg.is_a? Array
-      #   [ operators['list_list'] ] + arg.map {|v| ast_with(v, compile, operators)}
-      # elsif arg.is_a? Hash
-      #   [ operators['hash_table_ht'] ] + arg.flat_map{|k,v| [k.to_s, ast_with(v, compile, operators)] }
       elsif arg.is_a?(Integer) || arg.is_a?(Float) || arg.is_a?(String) || arg.is_a?(Symbol) || arg.is_a?(TrueClass) || arg.is_a?(FalseClass)
         arg
       end

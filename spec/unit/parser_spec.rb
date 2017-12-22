@@ -159,6 +159,8 @@ describe Mudpot::Parser do
 
      expect("$var").to ast([:scope_get, 'var'])
      expect("$var = scope_get(2)").to ast([:scope_set, 'var', [:scope_get, 2]])
+     expect("$var ||= scope_get(2)").to ast([:cond_if, [:compare_eq_to, [:cond_if], [:scope_get, 'var']], [:scope_set, 'var', [:scope_get, 2]]])
+     expect("$var ||= scope_get(2)").to compiled([111, [290, [111], [120, 'var']], [121, 'var', [120, 2]]])
 
      expect("$cloud.page.var").to ast([:cloud_scope_page_get, 'var'])
      expect("$cloud.page.var = scope_get(2)").to ast([:cloud_scope_page_set, 'var', [:scope_get, 2]])
