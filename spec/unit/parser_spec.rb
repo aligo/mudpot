@@ -14,6 +14,13 @@ describe Mudpot::Parser do
     expect("@[1, nil, 3]").to compiled([500, 1, nil, 3])
   end
 
+  it 'can parse literal hash' do
+    expect("@{}").to compiled([600])
+    expect("@{'key': 'value'}").to compiled([600, 'key', 'value'])
+    expect("@{'key': 'value', 'key2': 'value2'}").to compiled([600, 'key', 'value', 'key2', 'value2'])
+    expect("@{'key': 'value', 'key': 'value2'}").to compiled([600, 'key', 'value2'])
+  end
+
   it 'can parse simple operator invoking' do
     expect('scope_get(1)').to compiled([120, 1])
     expect("scope_get(1, '2', 3.3)").to compiled([120, 1, '2', 3.3])

@@ -15,6 +15,9 @@ module Mudpot
     rule('@')
     rule('[')
     rule(']')
+    rule('{')
+    rule('}')
+    rule(':')
 
     rule(:nil => 'nil' ).as { nil }
     rule(:do => 'do' )
@@ -32,7 +35,21 @@ module Mudpot
       r['@', '[', ']'].as { |_, _, _| Expression.new.list_list }
       r['@', '[', :args, ']'].as { |_, _, args, _| Expression.new.list_list(*args) }
     end
-    
+
+    rule(:hash) do |r|
+      r['@', '{', '}'].as { |_, _, _| Expression.new.hash_table_ht }
+      r['@', '{', :hash_pairs, '}'].as { |_, _, hash_pair, _| Expression.new.hash_table_ht(*hash_pair.flat_map {|i| i }) }
+    end
+
+    rule(:hash_pair) do |r|
+      r[:expr, ':', :expr].as { |key, _, value| {key => value} }
+    end
+
+    rule(:hash_pairs) do |r|
+      r[].as                  { [] }
+      r[:hash_pairs, ',', :hash_pair].as { |ht, _, i| ht.merge(i) }
+      r[:hash_pair].as             { |i| i }
+    end
 
     rule(:args) do |r|
       r[].as                  { [] }
@@ -47,6 +64,7 @@ module Mudpot
       r[:int]
       r[:float]
       r[:list]
+      r[:hash]
       r[:do_exprs]
     end
 
