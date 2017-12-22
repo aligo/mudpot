@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'mudpot'
+
+options = {}
+
+OptionParser.new do |parser|
+  parser.on("-o", "--operators OPERATORS_FILE", "The path to operators file.") do |v|
+    options[:operators] = v
+  end
+end.parse!
+
+raise "\nNo Operators File Specified" if options[:operators].nil?
+
+begin
+  operators = Mudpot::Compiler.load_operators options[:operators]
+rescue => e
+  raise "\nLoad Operators Error: \n#{e}"
+end
+
+source_file = ARGV[0]
+output_file = ARGV[1]
+
+raise "\nNo Source File Specified" if source_file.nil?
+raise "\nNo Output File Specified" if output_file.nil?
+
+output = Mudpot::Compiler.compile_to_json(File.open(source_file).read, operators)
+
+File.write(output_file, output)
+
+puts "Compiled #{source_file} to #{output_file}."

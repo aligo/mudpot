@@ -2,9 +2,7 @@ require 'mudpot'
 
 module Helper
 
-  OPERATORS = Hash[YAML.load_file("#{File.dirname(__FILE__)}/operators.yml").map do |key, value|
-    [key.downcase.gsub('mud_op_', ''), value]
-  end].freeze
+  OPERATORS = Mudpot::Compiler.load_operators("#{File.dirname(__FILE__)}/operators.yml")
 
   def op
     Mudpot::Expression.new
