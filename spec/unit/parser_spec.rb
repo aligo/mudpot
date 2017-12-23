@@ -6,6 +6,10 @@ describe Mudpot::Parser do
     expect('1').to compiled(1)
     expect('0.1').to compiled(0.1)
     expect("'string'").to compiled('string')
+    expect("""
+      'str
+      ing'
+    """).to compiled("str\ning")
   end
 
   it 'can parse literal list' do
@@ -200,6 +204,11 @@ describe Mudpot::Parser do
     expect("-> do $3 end()").to ast([:lambda_apply, [:lambda_lambda, [:scope_arg, 3]]])
     expect("-> { $3 }(2)").to ast([:lambda_apply, [:lambda_lambda, [:scope_arg, 3]], 2])
     expect("$1(2, 3)").to ast([:lambda_apply, [:scope_arg, 1], 2, 3])
+  end
+
+  it 'can parse regex' do
+    expect("/[^[:space:]]+/").to ast([:regex_regex, '[^[:space:]]+'])
+    expect('/[^\/]+/').to ast([:regex_regex, '[^\/]+'])
   end
 
 end

@@ -28,6 +28,7 @@ module Mudpot
     rule('||')
     rule('|>')
     rule('->')
+    rule('/')
     rule('do')
     rule('end')
 
@@ -47,7 +48,7 @@ module Mudpot
       r[:int, '.', :int].as { |i, _, f| Float("#{i}.#{f}") }
     end
     rule(:token => /\w+/)
-    rule(:single_quoted_string => /'[^']*'/).as { |s| s[1..-2] }
+    rule(:single_quoted_string => /'[^']*'/m).as { |s| s[1..-2].gsub(/\n\s*/, "\n") }
 
     rule(:list) do |r|
       r['@', '[', ']'].as                   { |_, _, _|             op.list_list }
@@ -79,6 +80,8 @@ module Mudpot
       r[:hash_pairs, :args_comma, :hash_pair].as  { |ht, _, i|  ht.merge(i) }
       r[:hash_pair].as                            { |i|         i }
     end
+
+    rule(:regex => /\/(?:\\.|[^\/])*\//).as { |s| op.regex_regex s[1..-2] }
 
     rule(:lambda) do |r|
       r['->', :do_exprs].as                               { |_, exprs|                     op.lambda_lambda(exprs)}
@@ -126,6 +129,7 @@ module Mudpot
       r[:float]
       r[:list]
       r[:hash]
+      r[:regex]
       r[:lambda]
     end
 
