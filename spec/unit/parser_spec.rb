@@ -138,10 +138,10 @@ describe Mudpot::Parser do
   it 'can parse do...end exprs' do
      expect("""do scope_get(1) end""").to ast([:scope_get, 1])
      expect("""do scope_get(1); scope_get(2) end""").to ast([[:scope_get, 1],[:scope_get, 2]])
-     expect("""do
+     expect("""{
         scope_get(1)
         scope_get(2)
-      end
+      }
     """).to ast([[:scope_get, 1],[:scope_get, 2]])
      expect("""do
         scope_get(1)
@@ -182,6 +182,7 @@ describe Mudpot::Parser do
 
   it 'can parse lambda' do
     expect("-> do $3 end").to ast([:lambda_lambda, [:scope_arg, 3]])
+    expect("()-> do $3 end").to ast([:lambda_lambda, [:list_list], [:scope_arg, 3]])
     expect("""
       -> do
         $0
@@ -190,15 +191,14 @@ describe Mudpot::Parser do
     """).to compiled([130, [[122, 0], [122, 1]]])
 
     expect("""
-      ($arg1, $arg2) -> do
+      ($arg1, $arg2) -> {
         $arg1
         $arg2
-      end
+      }
     """).to compiled([130, [500, 'arg1', 'arg2'], [[120, 'arg1'], [120, 'arg2']]])
 
-
     expect("-> do $3 end()").to ast([:lambda_apply, [:lambda_lambda, [:scope_arg, 3]]])
-    expect("-> do $3 end(2)").to ast([:lambda_apply, [:lambda_lambda, [:scope_arg, 3]], 2])
+    expect("-> { $3 }(2)").to ast([:lambda_apply, [:lambda_lambda, [:scope_arg, 3]], 2])
     expect("$1(2, 3)").to ast([:lambda_apply, [:scope_arg, 1], 2, 3])
   end
 

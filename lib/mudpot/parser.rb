@@ -28,10 +28,18 @@ module Mudpot
     rule('||')
     rule('|>')
     rule('->')
+    rule('do')
+    rule('end')
 
     rule(:nil => 'nil' ).as { nil }
-    rule(:do => 'do' )
-    rule(:end => 'end' )
+    rule(:do) do |r|
+      r['do']
+      r['{']
+    end
+    rule(:end) do |r|
+      r['end']
+      r['}']
+    end
 
 
     rule(:int => /[0-9]+/).as { |i| Integer(i) }
