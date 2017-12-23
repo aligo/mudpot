@@ -121,11 +121,16 @@ module Mudpot
       r[:lambda]
     end
 
+    rule(:lambda_apply) do |r|
+      r[:expr, '(', :args, ')'].as  { |lambda, _, args, _|    op.lambda_apply(*([lambda] + args)) }
+    end
+
     rule(:expr) do |r|
       r[:scope_expr]
       r[:token, '(', :args, ')'].as { |operator, _, args, _|  op.send(operator, *args) }
       r[:literal_expr]
       r[:do_exprs]
+      r[:lambda_apply]
       r[:expr, :list_nth].as { |expr, list_nth| list_nth.set_arg(0, expr) }
       r[:expr, :hash_key].as { |expr, hash_key| hash_key.set_arg(0, expr) }
       r[:expr, :pipeline].as { |expr, pipeline| pipeline.set_arg(0, expr) }

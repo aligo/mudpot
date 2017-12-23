@@ -195,6 +195,11 @@ describe Mudpot::Parser do
         $arg2
       end
     """).to compiled([130, [500, 'arg1', 'arg2'], [[120, 'arg1'], [120, 'arg2']]])
+
+
+    expect("-> do $3 end()").to ast([:lambda_apply, [:lambda_lambda, [:scope_arg, 3]]])
+    expect("-> do $3 end(2)").to ast([:lambda_apply, [:lambda_lambda, [:scope_arg, 3]], 2])
+    expect("$1(2, 3)").to ast([:lambda_apply, [:scope_arg, 1], 2, 3])
   end
 
 end
