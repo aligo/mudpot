@@ -31,6 +31,10 @@ module Mudpot
     rule('/')
     rule('do')
     rule('end')
+    rule('if')
+    rule('unless')
+    rule('elsif')
+    rule('else')
 
     rule(:nil => 'nil' ).as { nil }
     rule(:do) do |r|
@@ -41,7 +45,6 @@ module Mudpot
       r['end']
       r['}']
     end
-
 
     rule(:int => /[0-9]+/).as { |i| Integer(i) }
     rule(:float) do |r|
@@ -137,12 +140,37 @@ module Mudpot
       r[:expr, '(', :args, ')'].as  { |lambda, _, args, _|    op.lambda_apply(*([lambda] + args)) }
     end
 
+    rule(:cond_keyworld) do |r|
+      r['if']
+      r['unless']
+    end
+
+    rule(:cond_start) do |r|
+      r[:cond_keyworld, '(', :expr, ')'].as { |cond, _, expr, _| op.send(:"cond_#{cond}", expr) }
+    end
+
+    rule(:cond_expr) do |r|
+      r[:cond_start, :do_exprs].as { |cond_expr, exprs| cond_expr.set_arg(1, exprs) }
+      r[:cond_start, :do_exprs, :cond_expr_else].as { |cond_expr, exprs1, exprs2| cond_expr.set_arg(1, exprs1).set_arg(2, exprs2) }
+    end
+
+    rule(:cond_expr_else) do |r|
+      r['else', :do_exprs].as                                       { |_, exprs| exprs }
+      r['elsif', '(', :expr, ')', :do_exprs].as                     { |_, _, cond, _, exprs|            op.cond_if(cond, exprs) }
+      r['elsif', '(', :expr, ')', :do_exprs, :cond_expr_else].as    { |_, _, cond, _, exprs1, exprs2|   op.cond_if(cond, exprs1, exprs2) }
+    end
+
+    rule(:inline_cond_expr) do |r|
+      r[:expr, :cond_start].as { |expr, cond_expr| cond_expr.set_arg(1, expr) }
+    end
+
     rule(:expr) do |r|
       r[:scope_expr]
       r[:token, '(', :args, ')'].as { |operator, _, args, _|  op.send(operator, *args) }
       r[:literal_expr]
       r[:do_exprs]
       r[:lambda_apply]
+      r[:cond_expr]
       r[:expr, :list_nth].as { |expr, list_nth| list_nth.set_arg(0, expr) }
       r[:expr, :hash_key].as { |expr, hash_key| hash_key.set_arg(0, expr) }
       r[:expr, :pipeline].as { |expr, pipeline| pipeline.set_arg(0, expr) }
@@ -153,10 +181,11 @@ module Mudpot
     end
 
     rule(:exprs) do |r|
-      r[].as                  { op }
+      r[].as                    { op }
       r[:exprs, :lb]
-      r[:exprs, :lb, :expr].as { |exprs, _, i| exprs + [i] }
-      r[:expr].as             { |i| op[i] }
+      r[:exprs, :lb, :expr].as  { |exprs, _, i| exprs + [i] }
+      r[:expr].as               { |i| op[i] }
+      r[:inline_cond_expr]
     end
 
     start(:exprs)
