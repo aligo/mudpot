@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Mudpot::Expression do
 
   it 'should can get ast' do
