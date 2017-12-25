@@ -32,12 +32,6 @@ module Mudpot
       self
     end
 
-    def lambda(*args)
-      @args = args
-      @operator = @operators['lambda_lambda']
-      self
-    end
-
     def ast(compile = false, operators = {})
       if compile && @operator
         operator = operators[@operator.to_s]
