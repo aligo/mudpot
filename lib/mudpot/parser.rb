@@ -48,6 +48,8 @@ module Mudpot
     rule('unless')
     rule('elsif')
     rule('else')
+    rule('<<')
+    rule('>>')
 
     rule(:nil => 'nil' ).as { nil }
     rule(:do) do |r|
@@ -205,6 +207,27 @@ module Mudpot
       r[:expr, '?', :expr, ':', :expr].as  { |cond, _, expr1, _, expr2| op.cond_if(cond, expr1, expr2) }
     end
 
+    rule(:def_macro) do |r|
+      r['<<', :token, '=', :expr].as  { |_, token, _, macro| op.macro_set(token, macro) }
+      r['<<', :token, :do_exprs].as   { |_, token, macro|    op.macro_set(token, macro) }
+    end
+
+    rule(:get_macro) do |r|
+      r['>>', :token, '<<'].as { |_, token, _| op.macro_get(token) }
+      r['>>', :token, '(', :get_macro_args, ')', '<<'].as { |_, token, _, args, _ , _| op.macro_get(token, args) }
+    end
+
+    rule(:get_macro_arg) do |r|
+      r[:token, ':', :expr].as { |key, _, value| {key => value} }
+    end
+
+    rule(:get_macro_args) do |r|
+      r[].as                                              {             {} }
+      r[:get_macro_args, :args_comma].as                  { |ht, _|     ht }
+      r[:get_macro_args, :args_comma, :get_macro_arg].as  { |ht, _, i|  ht.merge(i) }
+      r[:get_macro_arg].as                                { |i|         i }
+    end
+
     rule(:expr) do |r|
       r[:operator_expr]
       r[:scope_expr]
@@ -213,6 +236,7 @@ module Mudpot
       r[:do_exprs]
       r[:lambda_apply]
       r[:cond_expr]
+      r[:get_macro]
       r[:expr, :list_nth].as { |expr, list_nth| list_nth.set_arg(0, expr) }
       r[:expr, :hash_key].as { |expr, hash_key| hash_key.set_arg(0, expr) }
       r[:expr, :pipeline].as { |expr, pipeline| pipeline.set_arg(0, expr) }
@@ -222,12 +246,17 @@ module Mudpot
       r[:do, :exprs, :end].as { |_, exprs, _| exprs }
     end
 
+    rule(:exprs_line) do |r|
+      r[:expr].as               { |i| op[i] }
+      r[:inline_cond_expr]
+      r[:def_macro]
+    end
+
     rule(:exprs) do |r|
       r[].as                    { op }
       r[:exprs, :lb]
-      r[:exprs, :lb, :expr].as  { |exprs, _, i| exprs + [i] }
-      r[:expr].as               { |i| op[i] }
-      r[:inline_cond_expr]
+      r[:exprs, :lb, :exprs_line].as  { |exprs, _, i| exprs + [i] }
+      r[:exprs_line]
     end
 
     start(:exprs)
