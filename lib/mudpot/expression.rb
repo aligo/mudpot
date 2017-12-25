@@ -44,7 +44,7 @@ module Mudpot
       elsif @operator == :macro_get
         new_macros = macros.clone
         new_macros.merge!(@args[1]) if @args[1]
-        ast_with(macros[@args[0]], compile, operators, new_macros)
+        ast_with((macros[@args[0]] || Excluded.new), compile, operators, new_macros)
       else
         if compile && @operator
           operator = operators[@operator.to_s]
