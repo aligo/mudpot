@@ -27,6 +27,8 @@ module Mudpot
 
     rule(:inline_mud_start) do |r|
       r['#{', :string].as {|_, mud| mud }
+      r[:inline_mud_start, '{', :string, '}'].as { |a, _, b, _| a + '{' + b + '}' }
+      r[:inline_mud_start, :string].as {|a, b| a + b }
     end
 
     rule(:inline_mud) do |r|

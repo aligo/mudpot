@@ -22,7 +22,9 @@ describe Mudpot::StringParser do
     expect('"#{$ccc}"').to ast([:string_concat, [:scope_get, 'ccc']])
     expect('"aa#{$ccc}"').to ast([:string_concat, "aa", [:scope_get, "ccc"]])
 
-    # p parse_string('aa#{@{"aa": "ccc"}{"aa"}}bbb').ast
+    expect(parse_string('aa#{@{"aa": "ccc"}{"aa"}}bbb').ast).to eq([:string_concat, "aa", [:hash_table_get, [:hash_table_ht, "aa", "ccc"], "aa"], "bbb"])
+
+    expect('"aa#{if ($ccc) { 1 } else { 2 }}"').to ast([:string_concat, "aa", [:cond_if, [:scope_get, "ccc"], 1, 2]])
   end
 
 end
