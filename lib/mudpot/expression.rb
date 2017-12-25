@@ -38,6 +38,9 @@ module Mudpot
       if @operator == :macro_set
         macros[@args[0]] = @args[1]
         Excluded.new
+      elsif @operator == :macro_init
+        macros[@args[0]] ||= @args[1]
+        Excluded.new
       elsif @operator == :macro_get
         new_macros = macros.clone
         new_macros.merge!(@args[1]) if @args[1]

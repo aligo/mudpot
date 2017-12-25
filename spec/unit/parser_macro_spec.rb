@@ -49,4 +49,15 @@ describe Mudpot::Parser do
     """).to ast([:cond_if, 1, 2, 3])
   end
 
+  it 'can parse init macro' do
+    expect("""
+      << a do
+        << str ||= 'hello'
+        $a = >>str<<
+      end
+      >>a<<
+      >>a(str: 'world')<<
+    """).to ast([[:scope_set, 'a', 'hello'], [:scope_set, 'a', 'world']])
+  end
+
 end

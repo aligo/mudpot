@@ -208,8 +208,9 @@ module Mudpot
     end
 
     rule(:def_macro) do |r|
-      r['<<', :token, '=', :expr].as  { |_, token, _, macro| op.macro_set(token, macro) }
-      r['<<', :token, :do_exprs].as   { |_, token, macro|    op.macro_set(token, macro) }
+      r['<<', :token, '=', :expr].as    { |_, token, _, macro|    op.macro_set(token, macro) }
+      r['<<', :token, '||=', :expr].as  { |_, token, _, macro|    op.macro_init(token, macro) }
+      r['<<', :token, :do_exprs].as     { |_, token, macro|       op.macro_set(token, macro) }
     end
 
     rule(:get_macro) do |r|
