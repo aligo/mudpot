@@ -1,5 +1,6 @@
 require 'whittle'
 require 'mudpot/expression'
+require 'mudpot/string_parser'
 
 module Mudpot
   class Parser < Whittle::Parser
@@ -65,6 +66,7 @@ module Mudpot
     end
     rule(:token => /\w+/)
     rule(:single_quoted_string => /'[^']*'/m).as { |s| s[1..-2].gsub(/\n\s*/, "\n") }
+    rule(:double_quoted_string => /"(?:\\"|[^"])*"/m).as { |s| StringParser.new.parse(s[1..-2]) }
 
     rule(:list) do |r|
       r['@', '[', ']'].as                   { |_, _, _|             op.list_list }
@@ -140,6 +142,7 @@ module Mudpot
 
     rule(:literal_expr) do |r|
       r[:single_quoted_string]
+      r[:double_quoted_string]
       r[:nil]
       r[:int]
       r[:negative_int]

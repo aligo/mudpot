@@ -8,6 +8,10 @@ module Helper
     Mudpot::Expression.new
   end
 
+  def parse_string(string)
+    Mudpot::StringParser.new.parse(string)
+  end
+
 end
 
 RSpec.configure do |config|
