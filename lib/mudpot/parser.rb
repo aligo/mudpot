@@ -50,8 +50,10 @@ module Mudpot
     end
 
     rule(:int => /[0-9]+/).as { |i| Integer(i) }
+    rule(:negative_int => /\-[0-9]+/).as { |i| Integer(i) }
     rule(:float) do |r|
       r[:int, '.', :int].as { |i, _, f| Float("#{i}.#{f}") }
+      r[:negative_int, '.', :int].as { |i, _, f| Float("-#{i.abs}.#{f}") }
     end
     rule(:token => /\w+/)
     rule(:single_quoted_string => /'[^']*'/m).as { |s| s[1..-2].gsub(/\n\s*/, "\n") }
@@ -132,6 +134,7 @@ module Mudpot
       r[:single_quoted_string]
       r[:nil]
       r[:int]
+      r[:negative_int]
       r[:float]
       r[:list]
       r[:hash]

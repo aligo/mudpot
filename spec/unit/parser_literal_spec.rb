@@ -2,7 +2,10 @@ describe Mudpot::Parser do
 
   it 'can parse literal' do
     expect('1').to compiled(1)
+    expect('-1').to compiled(-1)
     expect('0.1').to compiled(0.1)
+    expect('-0.1').to compiled(-0.1)
+    expect('-99.1').to compiled(-99.1)
     expect("'string'").to compiled('string')
     expect("""
       'str
