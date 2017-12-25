@@ -48,6 +48,21 @@ describe Mudpot::Parser do
       >>if_macro(check: 1, true: 2, false: 3)<<
     """).to ast([:cond_if, 1, 2, 3])
 
+
+    expect("""
+      << if_macro do
+        if (>>check<<) {
+          >>true<<
+        } else {
+          >>false<<
+        }
+      end
+      << new_if_macro do
+        >>if_macro(check: 1)<<
+      end
+      >>new_if_macro(true: 2, false: 3)<<
+    """).to ast([:cond_if, 1, 2, 3])
+
     expect("""
       << if_macro do
         if (>>check<<) {
