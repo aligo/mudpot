@@ -25,7 +25,10 @@ module Mudpot
     rule(':')
     rule('$')
     rule('=')
+    rule('||=')
+    rule('!')
     rule('||')
+    rule('&&')
     rule('|>')
     rule('->')
     rule('/')
@@ -87,8 +90,8 @@ module Mudpot
     rule(:regex => /\/(?:\\.|[^\/])*\//).as { |s| op.regex_regex s[1..-2] }
 
     rule(:lambda) do |r|
-      r['->', :do_exprs].as                               { |_, exprs|                     op.lambda_lambda(exprs)}
-      r['(', :params, ')', '->', :do, :exprs, :end].as    { |_, params, _, _, _, exprs, _| op.lambda_lambda( op.list_list(*params), exprs)}
+      r['@', '->', :do_exprs].as                               { |_, _, exprs|                     op.lambda_lambda(exprs)}
+      r['@', '(', :params, ')', '->', :do, :exprs, :end].as    { |_, _, params, _, _, _, exprs, _| op.lambda_lambda( op.list_list(*params), exprs)}
     end
 
     rule(:pipeline) do |r|
@@ -116,13 +119,13 @@ module Mudpot
     end
 
     rule(:scope_expr) do |r|
-      r['$', :int].as               { |_, i|                  op.scope_arg i }
-      r['$', :token].as             { |_, token|              op.scope_get token }
-      r['$', :token, '=', :expr].as { |_, token, _, value|    op.scope_set token, value }
-      r['$', :token, '||', '=', :expr].as { |_, token, _, _, value|    op.cond_if(op.is_nil(op.scope_get(token)), op.scope_set(token, value)) }
+      r['$', :int].as                 { |_, i|                  op.scope_arg i }
+      r['$', :token].as               { |_, token|              op.scope_get token }
+      r['$', :token, '=', :expr].as   { |_, token, _, value|    op.scope_set token, value }
+      r['$', :token, '||=', :expr].as { |_, token, _, value|  op.cond_if(op.is_nil(op.scope_get(token)), op.scope_set(token, value)) }
       r['$', :token, '.', :token, '.', :token].as                   { |_, bridge, _, namespace, _, token|               op.send(:"#{bridge}_scope_#{namespace}_get", token) }
       r['$', :token, '.', :token, '.', :token, '=', :expr].as       { |_, bridge, _, namespace, _, token, _, value|     op.send(:"#{bridge}_scope_#{namespace}_set", token, value) }
-      r['$', :token, '.', :token, '.', :token, '||', '=', :expr].as { |_, bridge, _, namespace, _, token, _, _, value|  op.send(:"#{bridge}_scope_#{namespace}_init", token, value) }
+      r['$', :token, '.', :token, '.', :token, '||=', :expr].as     { |_, bridge, _, namespace, _, token, _, value|     op.send(:"#{bridge}_scope_#{namespace}_init", token, value) }
     end
 
     rule(:literal_expr) do |r|
@@ -164,7 +167,15 @@ module Mudpot
       r[:expr, :cond_start].as { |expr, cond_expr| cond_expr.set_arg(1, expr) }
     end
 
+    rule(:operator_expr) do |r|
+      r['(', :expr, ')'].as             { |_, expr, _| op[expr] }
+      r['!', :expr].as                  { |_, expr| op.boolean_not(expr) }
+      r[:expr, '&&', :expr].as          { |expr1, _, expr2| op.boolean_and(expr1, expr2) }
+      r[:expr, '||', :expr].as          { |expr1, _, expr2| op.boolean_or(expr1, expr2) }
+    end
+
     rule(:expr) do |r|
+      r[:operator_expr]
       r[:scope_expr]
       r[:token, '(', :args, ')'].as { |operator, _, args, _|  op.send(operator, *args) }
       r[:literal_expr]

@@ -57,24 +57,24 @@ describe Mudpot::Parser do
   end
 
   it 'can parse lambda' do
-    expect("-> do $3 end").to ast([:lambda_lambda, [:scope_arg, 3]])
-    expect("()-> do $3 end").to ast([:lambda_lambda, [:list_list], [:scope_arg, 3]])
+    expect("@-> do $3 end").to ast([:lambda_lambda, [:scope_arg, 3]])
+    expect("@()-> do $3 end").to ast([:lambda_lambda, [:list_list], [:scope_arg, 3]])
     expect("""
-      -> do
+      @-> do
         $0
         $1
       end
     """).to compiled([130, [[122, 0], [122, 1]]])
 
     expect("""
-      ($arg1, $arg2) -> {
+      @($arg1, $arg2) -> {
         $arg1
         $arg2
       }
     """).to compiled([130, [500, 'arg1', 'arg2'], [[120, 'arg1'], [120, 'arg2']]])
 
-    expect("-> do $3 end()").to ast([:lambda_apply, [:lambda_lambda, [:scope_arg, 3]]])
-    expect("-> { $3 }(2)").to ast([:lambda_apply, [:lambda_lambda, [:scope_arg, 3]], 2])
+    expect("@-> do $3 end()").to ast([:lambda_apply, [:lambda_lambda, [:scope_arg, 3]]])
+    expect("@-> { $3 }(2)").to ast([:lambda_apply, [:lambda_lambda, [:scope_arg, 3]], 2])
     expect("$1(2, 3)").to ast([:lambda_apply, [:scope_arg, 1], 2, 3])
   end
 
