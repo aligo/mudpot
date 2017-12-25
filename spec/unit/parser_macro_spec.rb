@@ -47,6 +47,24 @@ describe Mudpot::Parser do
       end
       >>if_macro(check: 1, true: 2, false: 3)<<
     """).to ast([:cond_if, 1, 2, 3])
+
+    expect("""
+      << if_macro do
+        if (>>check<<) {
+          >>true<<
+        } else {
+          >>false<<
+        }
+      end
+      >>if_macro(
+        check: 1
+        true: do
+          $a = 1
+          $b = 2
+        end
+        false: 3
+      )<<
+    """).to ast([:cond_if, 1, [[:scope_set, 'a', 1], [:scope_set, 'b', 2]], 3])
   end
 
   it 'can parse init macro' do
