@@ -9,6 +9,7 @@ module Mudpot
     end
 
     BACKSLASHED_CHARS = {
+      "\\s"  => "\s",
       "\\b"  => "\b",
       "\\t"  => "\t",
       "\\n"  => "\n",
@@ -22,7 +23,7 @@ module Mudpot
     rule('}')
     rule('#{')
 
-    rule(:escape => /\\(?:[btnfr\\"]|\\\\)/).as { |s| BACKSLASHED_CHARS[s] }
+    rule(:escape => /\\(?:[sbtnfr\\"]|\\\\)/).as { |s| BACKSLASHED_CHARS[s] }
     rule(:wildcard => /./)
 
     rule(:inline_mud_start) do |r|

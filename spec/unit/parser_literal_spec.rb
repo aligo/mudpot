@@ -11,6 +11,7 @@ describe Mudpot::Parser do
       'str
       ing'
     """).to compiled("str\ning")
+    expect('"str\n\sing"').to compiled("str\n ing")
   end
 
   it 'can parse literal list' do
