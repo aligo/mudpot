@@ -33,4 +33,9 @@ describe Mudpot::Parser do
     expect("$var1 <= $var2").to compiled([295, [120, 'var1'], [120, 'var2']])
   end
 
+  it 'can parse ternary operator' do
+    expect("$var1 ? 1 : $var2").to compiled([111, [120, 'var1'], 1, [120, 'var2']])
+    expect("$x = $var1 ? 1 : $var2").to compiled([121, 'x', [111, [120, 'var1'], 1, [120, 'var2']]])
+  end
+
 end

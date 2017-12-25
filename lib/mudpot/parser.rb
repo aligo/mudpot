@@ -31,6 +31,7 @@ module Mudpot
     rule('<')
     rule('||=')
     rule('!')
+    rule('?')
     rule('||') % :left ^ 3
     rule('&&') % :left ^ 3
     rule('+') % :left ^ 1
@@ -200,6 +201,8 @@ module Mudpot
       r[:expr, '>', '=', :expr].as         { |expr1, _, _, expr2| op.compare_gt_or_eq(expr1, expr2) }
       r[:expr, '<', :expr].as              { |expr1, _, expr2|    op.compare_lt(expr1, expr2) }
       r[:expr, '<', '=', :expr].as         { |expr1, _, _, expr2| op.compare_lt_or_eq(expr1, expr2) }
+
+      r[:expr, '?', :expr, ':', :expr].as  { |cond, _, expr1, _, expr2| op.cond_if(cond, expr1, expr2) }
     end
 
     rule(:expr) do |r|
