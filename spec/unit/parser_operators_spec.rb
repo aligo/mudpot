@@ -23,4 +23,14 @@ describe Mudpot::Parser do
     expect("1 + 2 + 3").to compiled([200, [200, 1, 2], 3])
   end
 
+  it 'can parse compare operators' do
+    expect("$var1 == $var2").to compiled([290, [120, 'var1'], [120, 'var2']])
+    expect("$var1 != $var2").to compiled([291, [120, 'var1'], [120, 'var2']])
+    expect("$var1 <> $var2").to compiled([291, [120, 'var1'], [120, 'var2']])
+    expect("$var1 > $var2").to compiled([292, [120, 'var1'], [120, 'var2']])
+    expect("$var1 >= $var2").to compiled([294, [120, 'var1'], [120, 'var2']])
+    expect("$var1 < $var2").to compiled([293, [120, 'var1'], [120, 'var2']])
+    expect("$var1 <= $var2").to compiled([295, [120, 'var1'], [120, 'var2']])
+  end
+
 end

@@ -25,6 +25,9 @@ module Mudpot
     rule(':')
     rule('$')
     rule('=')
+    rule('==')
+    rule('>')
+    rule('<')
     rule('||=')
     rule('!')
     rule('||') % :left ^ 3
@@ -186,6 +189,14 @@ module Mudpot
       r[:expr, '*', :expr].as              { |expr1, _, expr2| op.arithmetic_multiplying(expr1, expr2) }
       r[:expr, '/', :expr].as              { |expr1, _, expr2| op.arithmetic_dividing(expr1, expr2) }
       r[:expr, '%', :expr].as              { |expr1, _, expr2| op.arithmetic_remainder(expr1, expr2) }
+
+      r[:expr, '==', :expr].as             { |expr1, _, expr2|    op.compare_eq_to(expr1, expr2) }
+      r[:expr, '<', '>', :expr].as         { |expr1, _, _, expr2| op.compare_not_eq_to(expr1, expr2) }
+      r[:expr, '!', '=', :expr].as         { |expr1, _, _, expr2| op.compare_not_eq_to(expr1, expr2) }
+      r[:expr, '>', :expr].as              { |expr1, _, expr2|    op.compare_gt(expr1, expr2) }
+      r[:expr, '>', '=', :expr].as         { |expr1, _, _, expr2| op.compare_gt_or_eq(expr1, expr2) }
+      r[:expr, '<', :expr].as              { |expr1, _, expr2|    op.compare_lt(expr1, expr2) }
+      r[:expr, '<', '=', :expr].as         { |expr1, _, _, expr2| op.compare_lt_or_eq(expr1, expr2) }
     end
 
     rule(:expr) do |r|
