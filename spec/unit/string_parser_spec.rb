@@ -9,4 +9,10 @@ describe Mudpot::StringParser do
     expect('"a\"aa"').to compiled('a"aa')
   end
 
+  it 'can parse inline mud' do
+    expect(parse_string('aa#{$ccc}bbb').ast).to eq([:string_concat, 'aa', [:scope_get, 'ccc'], 'bbb'])
+
+    expect('"aa#{($ccc)}bbb"').to ast([:string_concat, 'aa', [:scope_get, 'ccc'], 'bbb'])
+  end
+
 end
