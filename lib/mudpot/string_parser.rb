@@ -24,8 +24,13 @@ module Mudpot
 
     rule(:escape => /\\(?:[btnfr\\"]|\\\\)/).as { |s| BACKSLASHED_CHARS[s] }
     rule(:wildcard => /./)
+
+    rule(:inline_mud_start) do |r|
+      r['#{', :string].as {|_, mud| mud }
+    end
+
     rule(:inline_mud) do |r|
-      r['#{', :string, '}'].as {|_, mud, _| Parser.new.parse(mud) }
+      r[:inline_mud_start, '}'].as {|mud, _| Parser.new.parse(mud) }
     end
 
     rule(:string_part) do |r|
