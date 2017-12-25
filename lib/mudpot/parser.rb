@@ -27,8 +27,13 @@ module Mudpot
     rule('=')
     rule('||=')
     rule('!')
-    rule('||')
-    rule('&&')
+    rule('||') % :left ^ 3
+    rule('&&') % :left ^ 3
+    rule('+') % :left ^ 1
+    rule('-') % :left ^ 1
+    rule('*') % :left ^ 2
+    rule('/') % :left ^ 2
+    rule('%') % :left ^ 2
     rule('|>')
     rule('->')
     rule('/')
@@ -175,6 +180,12 @@ module Mudpot
       r['!', :expr].as                  { |_, expr| op.boolean_not(expr) }
       r[:expr, '&&', :expr].as          { |expr1, _, expr2| op.boolean_and(expr1, expr2) }
       r[:expr, '||', :expr].as          { |expr1, _, expr2| op.boolean_or(expr1, expr2) }
+
+      r[:expr, '+', :expr].as              { |expr1, _, expr2| op.arithmetic_adding(expr1, expr2) }
+      r[:expr, '-', :expr].as              { |expr1, _, expr2| op.arithmetic_subtracting(expr1, expr2) }
+      r[:expr, '*', :expr].as              { |expr1, _, expr2| op.arithmetic_multiplying(expr1, expr2) }
+      r[:expr, '/', :expr].as              { |expr1, _, expr2| op.arithmetic_dividing(expr1, expr2) }
+      r[:expr, '%', :expr].as              { |expr1, _, expr2| op.arithmetic_remainder(expr1, expr2) }
     end
 
     rule(:expr) do |r|
