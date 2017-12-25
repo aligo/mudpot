@@ -1,5 +1,6 @@
 module Mudpot
   class Expression
+    attr_reader :operator, :args
 
     def initialize
       @operator = nil

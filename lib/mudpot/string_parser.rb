@@ -18,9 +18,15 @@ module Mudpot
       "\\\\" => "\\"
     }
 
+    rule('{')
+    rule('}')
+    rule('#{')
+
     rule(:escape => /\\(?:[btnfr\\"]|\\\\)/).as { |s| BACKSLASHED_CHARS[s] }
     rule(:wildcard => /./)
-    rule(:inline_mud => /#\{.+\}/).as { |s| s[2..-2] }
+    rule(:inline_mud) do |r|
+      r['#{', :string, '}'].as {|_, mud, _| Parser.new.parse(mud) }
+    end
 
     rule(:string_part) do |r|
       r[:wildcard]
@@ -28,13 +34,35 @@ module Mudpot
     end
 
     rule(:string) do |r|
-      r[].as                    { '' }
       r[:string_part]
-      r[:string, :string_part].as  { |a,b| a + b }
-      r[:string, :inline_mud, :string].as { |a, mud, b| op.string_concat(a, Parser.new.parse(mud), b) }
+      r[:string, :string_part].as     { |a, b| a + b }
     end
 
-    start(:string)
+    rule(:mixed_string_part) do |r|
+      r[:string]
+      r[:inline_mud].as do |mud|
+        op.string_concat(mud)
+      end
+    end
+
+    rule(:mixed_string) do |r|
+      r[].as                       { '' }
+      r[:mixed_string_part]
+      r[:mixed_string, :mixed_string_part].as do |a, b|
+        if a.is_a?(String) && b.is_a?(String)
+          a + b
+        elsif a.is_a?(Expression) && a.operator == :string_concat && b.is_a?(Expression) && b.operator == :string_concat
+          op.string_concat(*(a.args + b.args))
+        elsif a.is_a?(Expression) && a.operator == :string_concat
+          op.string_concat(*(a.args + [b]))
+        elsif b.is_a?(Expression) && b.operator == :string_concat
+          op.string_concat(*([a] + b.args))
+        end
+      end
+    end
+
+
+    start(:mixed_string)
 
   end
 end
