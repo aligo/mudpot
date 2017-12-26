@@ -48,8 +48,6 @@ module Mudpot
     rule('unless')
     rule('elsif')
     rule('else')
-    rule('<<')
-    rule('>>')
 
     rule(:nil => 'nil' ).as { nil }
     rule(:do) do |r|
@@ -67,6 +65,7 @@ module Mudpot
       r[:int, '.', :int].as { |i, _, f| Float("#{i}.#{f}") }
       r[:negative_int, '.', :int].as { |i, _, f| Float("-#{i.abs}.#{f}") }
     end
+    rule(:macro_token => /\w+!/)
     rule(:token => /\w+/)
     rule(:single_quoted_string => /'[^']*'/m).as { |s| s[1..-2].gsub(/\n\s*/, "\n") }
     rule(:double_quoted_string => /"(?:\\"|[^"])*"/m).as { |s| StringParser.new.parse(s[1..-2]) }
@@ -208,14 +207,14 @@ module Mudpot
     end
 
     rule(:def_macro) do |r|
-      r['<<', :token, '=', :expr].as    { |_, token, _, macro|    op.macro(:macro_set,  token, macro) }
-      r['<<', :token, '||=', :expr].as  { |_, token, _, macro|    op.macro(:macro_init, token, macro) }
-      r['<<', :token, :do_exprs].as     { |_, token, macro|       op.macro(:macro_set,  token, macro) }
+      r[:macro_token, :token, '=', :expr].as      { |macro_token, token, _, macro|    op.macro(macro_token[0..-2], token, macro) }
+      r[:macro_token, :token, :do_exprs].as       { |macro_token, token, macro|       op.macro(macro_token[0..-2], token, macro) }
     end
 
     rule(:get_macro) do |r|
-      r['>>', :token, '<<'].as { |_, token, _| op.macro(:macro_get, token) }
-      r['>>', :token, '(', :get_macro_args, ')', '<<'].as { |_, token, _, args, _ , _| op.macro(:macro_get, token, args) }
+      r[:macro_token].as                            { |macro_token|             op.macro(:macro_get, macro_token[0..-2]) }
+      r[:macro_token, '(', :get_macro_args, ')'].as { |macro_token, _, args, _| op.macro(:macro_get, macro_token[0..-2], args) }
+      r[:macro_token, '{', :macro_args, '}'].as     { |macro_token, _, args, _| op.macro(macro_token[0..-2], *args) }
     end
 
     rule(:get_macro_arg) do |r|
@@ -227,6 +226,18 @@ module Mudpot
       r[:get_macro_args, :args_comma].as                  { |ht, _|     ht }
       r[:get_macro_args, :args_comma, :get_macro_arg].as  { |ht, _, i|  ht.merge(i) }
       r[:get_macro_arg].as                                { |i|         i }
+    end
+
+    rule(:macro_arg) do |r|
+      r[:token]
+      r[:expr]
+    end
+
+    rule(:macro_args) do |r|
+      r[].as                                              {             [] }
+      r[:macro_args, :args_comma].as                      { |a, _|      a }
+      r[:macro_args, :args_comma, :macro_arg].as          { |a, _, i|   a + [i] }
+      r[:macro_arg].as                                    { |i|         [i] }
     end
 
     rule(:expr) do |r|
