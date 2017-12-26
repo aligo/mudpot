@@ -208,14 +208,14 @@ module Mudpot
     end
 
     rule(:def_macro) do |r|
-      r['<<', :token, '=', :expr].as    { |_, token, _, macro|    op.macro_set(token, macro) }
-      r['<<', :token, '||=', :expr].as  { |_, token, _, macro|    op.macro_init(token, macro) }
-      r['<<', :token, :do_exprs].as     { |_, token, macro|       op.macro_set(token, macro) }
+      r['<<', :token, '=', :expr].as    { |_, token, _, macro|    op.macro(:macro_set,  token, macro) }
+      r['<<', :token, '||=', :expr].as  { |_, token, _, macro|    op.macro(:macro_init, token, macro) }
+      r['<<', :token, :do_exprs].as     { |_, token, macro|       op.macro(:macro_set,  token, macro) }
     end
 
     rule(:get_macro) do |r|
-      r['>>', :token, '<<'].as { |_, token, _| op.macro_get(token) }
-      r['>>', :token, '(', :get_macro_args, ')', '<<'].as { |_, token, _, args, _ , _| op.macro_get(token, args) }
+      r['>>', :token, '<<'].as { |_, token, _| op.macro(:macro_get, token) }
+      r['>>', :token, '(', :get_macro_args, ')', '<<'].as { |_, token, _, args, _ , _| op.macro(:macro_get, token, args) }
     end
 
     rule(:get_macro_arg) do |r|

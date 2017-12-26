@@ -1,3 +1,5 @@
+require 'mudpot/macro_scope'
+
 module Mudpot
   class Expression
     attr_reader :operator, :args
@@ -34,17 +36,14 @@ module Mudpot
       self
     end
 
-    def ast(compile = false, operators = {}, macros = {})
-      if @operator == :macro_set
-        macros[@args[0]] = @args[1]
-        Excluded.new
-      elsif @operator == :macro_init
-        macros[@args[0]] ||= @args[1]
-        Excluded.new
-      elsif @operator == :macro_get
-        new_macros = macros.clone
-        new_macros.merge!(@args[1]) if @args[1]
-        ast_with((macros[@args[0]] || Excluded.new), compile, operators, new_macros)
+    def ast(compile = false, operators = {}, macro_scope = MacroScope.new)
+      if @operator == :macro
+        macro_scope, ops = macro_scope.send(*@args)
+        if ops
+          ast_with(ops, compile, operators, macro_scope)
+        else
+          Excluded.new
+        end
       else
         if compile && @operator
           operator = operators[@operator.to_s]
@@ -53,7 +52,7 @@ module Mudpot
           operator = @operator
         end
         ret = [ operator ].compact + @args.map do |arg|
-          ast_with(arg, compile, operators, macros)
+          ast_with(arg, compile, operators, macro_scope)
         end.reject {|a| a.is_a?(Excluded) } 
         if ret.count == 1 && !@operator
           ret.first
@@ -63,16 +62,16 @@ module Mudpot
       end
     end
 
-    def ast_with(arg, compile, operators, macros = {})
+    def ast_with(arg, compile, operators, macro_scope = MacroScope.new)
       if arg.is_a? Expression
-        arg.ast(compile, operators, macros)
+        arg.ast(compile, operators, macro_scope)
       elsif arg.is_a?(Integer) || arg.is_a?(Float) || arg.is_a?(String) || arg.is_a?(Symbol) || arg.is_a?(TrueClass) || arg.is_a?(FalseClass)
         arg
       end
     end
 
-    def compile(operators)
-      ast(true, operators, {})
+    def compile(operators, macro_scope = MacroScope.new)
+      ast(true, operators, macro_scope)
     end
 
 
