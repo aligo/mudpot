@@ -17,12 +17,16 @@ module Mudpot
       self
     end
 
-    def macro_set(token, macro)
-      @macros[token] = macro if token && macro
-      [self, nil]
+    def macro_set(token, macro, symbol = '=')
+      if symbol == '||='
+        macro_init(token, macro, symbol)
+      else
+        @macros[token] = macro if token && macro
+        [self, nil]
+      end
     end
 
-    def macro_init(token, macro)
+    def macro_init(token, macro, symbol = '||=')
       @macros[token] ||= macro if token && macro
       [self, nil]
     end
