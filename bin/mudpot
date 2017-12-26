@@ -9,6 +9,9 @@ OptionParser.new do |parser|
   parser.on("-o", "--operators OPERATORS_FILE", "The path to operators file.") do |v|
     options[:operators] = v
   end
+  parser.on("-b", "--import-base DIR", "The path import-based.") do |v|
+    options[:import_base] = v
+  end
 end.parse!
 
 raise "\nNo Operators File Specified" if options[:operators].nil?
@@ -25,7 +28,11 @@ output_file = ARGV[1]
 raise "\nNo Source File Specified" if source_file.nil?
 raise "\nNo Output File Specified" if output_file.nil?
 
-output = Mudpot::Compiler.compile_to_json(File.open(source_file).read, operators)
+
+macro_scope = Mudpot::MacroScope.new
+macro_scope['_import_base_'] = options[:import_base] || File.dirname(source_file)
+
+output = Mudpot::Compiler.compile_to_json(source_file, operators, macro_scope)
 
 File.write(output_file, output)
 

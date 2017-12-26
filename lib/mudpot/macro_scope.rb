@@ -17,6 +17,27 @@ module Mudpot
       self
     end
 
+    def [](token)
+      @macros[token]
+    end
+
+    def []=(token, macro)
+      @macros[token] = macro
+    end
+
+    def get_shared(key)
+      @shareds[key]
+    end
+
+    def set_shared(key, value)
+      @shareds[key] = value
+    end
+
+    def import(file)
+      path = File.join(self['_import_base_'], file)
+      [self, Compiler.parse_file(path)]
+    end
+
     def macro_set(token, macro, symbol = '=')
       if symbol == '||='
         macro_init(token, macro, symbol)
@@ -42,8 +63,6 @@ module Mudpot
         [self, nil]
       end
     end
-
-
 
   end
 

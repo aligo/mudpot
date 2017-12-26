@@ -12,6 +12,10 @@ module Helper
     Mudpot::StringParser.new.parse(string)
   end
 
+  def operators 
+    OPERATORS
+  end
+
 end
 
 RSpec.configure do |config|

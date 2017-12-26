@@ -214,8 +214,8 @@ module Mudpot
 
     rule(:get_macro) do |r|
       r[:macro_token].as                            { |macro_token|             op.macro(:macro_get, macro_token[0..-2]) }
-      r[:macro_token, '(', :get_macro_args, ')'].as { |macro_token, _, args, _| op.macro(:macro_get, macro_token[0..-2], args) }
-      r[:macro_token, '{', :macro_args, '}'].as     { |macro_token, _, args, _| op.macro(macro_token[0..-2], *args) }
+      r[:macro_token, '{', :get_macro_args, '}'].as { |macro_token, _, args, _| op.macro(:macro_get, macro_token[0..-2], args) }
+      r[:macro_token, '(', :macro_args, ')'].as     { |macro_token, _, args, _| op.macro(macro_token[0..-2], *args) }
     end
 
     rule(:get_macro_arg) do |r|

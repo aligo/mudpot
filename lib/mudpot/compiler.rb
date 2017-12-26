@@ -11,12 +11,17 @@ module Mudpot
       end]
     end
 
-    def self.compile(mud, operators)
-      Mudpot::Parser.new.parse(mud).compile(operators)
+    def self.parse_file(path)
+      Mudpot::Parser.new.parse File.open(path).read
     end
 
-    def self.compile_to_json(mud, operators)
-      JSON.generate(self.compile(mud, operators))
+    def self.compile(path, operators, macro_scope = MacroScope.new)
+      mud = parse_file path
+      mud.compile(operators, macro_scope)
+    end
+
+    def self.compile_to_json(path, operators, macro_scope = MacroScope.new)
+      JSON.generate(self.compile(path, operators, macro_scope))
     end
 
   end
