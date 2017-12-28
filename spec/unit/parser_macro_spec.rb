@@ -139,4 +139,30 @@ describe Mudpot::Parser do
     """).to ast([3, [:scope_set, 'a', 'world'], 1])
   end
 
+
+
+  it 'can parse merge macro' do
+    expect("""
+      macro_set! a_macro do
+        scope_get(data!)
+      end
+      macro_set! b_macro do
+        macro_set! data >> @{}
+        a_macro!
+      end
+      macro_set! c_macro do
+        macro_set! data >> @{'k': 'v'}
+        b_macro!
+      end
+      macro_set! d_macro do
+        macro_set! data << @{'k': 'v2'}
+        b_macro!
+      end
+      a_macro!
+      b_macro!
+      c_macro!
+      d_macro!
+    """).to ast([[:scope_get, nil], [:scope_get, [:hash_table_ht]], [:scope_get, [:hash_table_ht, 'k', 'v']], [:scope_get, [:hash_table_ht, 'k', 'v2', 'k', 'v']]])
+  end
+
 end

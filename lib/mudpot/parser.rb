@@ -41,6 +41,8 @@ module Mudpot
     rule('%') % :left ^ 2
     rule('|>')
     rule('->')
+    rule('>>')
+    rule('<<')
     rule('/')
     rule('do')
     rule('end')
@@ -206,10 +208,16 @@ module Mudpot
       r[:expr, '?', :expr, ':', :expr].as  { |cond, _, expr1, _, expr2| op.cond_if(cond, expr1, expr2) }
     end
 
+    rule(:macro_symbol) do |r|
+      r['=']
+      r['||=']
+      r['>>']
+      r['<<']
+    end
+
     rule(:def_macro) do |r|
-      r[:macro_token, :token, '=', :expr].as        { |macro_token, token, symbol, macro|     op.macro(macro_token[0..-2], token, macro, symbol) }
-      r[:macro_token, :token, '||=', :expr].as      { |macro_token, token, symbol, macro|     op.macro(macro_token[0..-2], token, macro, symbol) }
-      r[:macro_token, :token, :do_exprs].as         { |macro_token, token, macro|             op.macro(macro_token[0..-2], token, macro) }
+      r[:macro_token, :token, :macro_symbol, :expr].as        { |macro_token, token, symbol, macro|     op.macro(macro_token[0..-2], token, macro, symbol) }
+      r[:macro_token, :token, :do_exprs].as                   { |macro_token, token, macro|             op.macro(macro_token[0..-2], token, macro) }
     end
 
     rule(:get_macro) do |r|

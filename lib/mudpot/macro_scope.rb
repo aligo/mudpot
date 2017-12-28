@@ -43,8 +43,11 @@ module Mudpot
     end
 
     def macro_set(token, macro, symbol = '=')
-      if symbol == '||='
+      case symbol
+      when '||='
         macro_init(token, macro, symbol)
+      when '>>', '<<'
+        macro_merge(token, macro, symbol)
       else
         @macros[token] = macro if token && macro
         [self, excluded]
@@ -53,6 +56,18 @@ module Mudpot
 
     def macro_init(token, macro, symbol = '||=')
       @macros[token] ||= macro if token && macro
+      [self, excluded]
+    end
+
+    def macro_merge(token, macro, symbol = '>>')
+      if token && macro
+        if @macros[token] && @macros[token].is_a?(Expression) && macro.is_a?(Expression) && @macros[token].operator == macro.operator
+          new_args = symbol == '<<' ?  macro.args + @macros[token].args : @macros[token].args + macro.args
+          @macros[token] = Expression.new.send macro.operator, *new_args
+        else
+          @macros[token] = macro
+        end
+      end
       [self, excluded]
     end
 
