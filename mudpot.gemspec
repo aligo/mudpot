@@ -1,6 +1,9 @@
+$:.push File.expand_path("../lib", __FILE__)
+require 'mudpot/version'
+
 Gem::Specification.new do |s|
   s.name        = 'mudpot'
-  s.version     = '0.0.1'
+  s.version     = Mudpot::VERSION
   s.summary     = 'summary'
   s.authors     = ['Aligo Kang']
   
