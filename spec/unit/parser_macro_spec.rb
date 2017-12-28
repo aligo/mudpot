@@ -116,6 +116,22 @@ describe Mudpot::Parser do
       a!
       b!{str: 'world'}
     """).to ast([3, [:scope_set, 'a', 'world']])
+
+    expect("""
+      macro_set! a do
+        3
+      end
+      macro_set! b do
+        macro_set! str ||= 'hello'
+        $a = str!
+      end
+      macro_set! c do
+        1
+      end
+      a!
+      b!{str: 'world'}
+      c!
+    """).to ast([3, [:scope_set, 'a', 'world'], 1])
   end
 
 end

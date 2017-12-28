@@ -207,9 +207,9 @@ module Mudpot
     end
 
     rule(:def_macro) do |r|
-      r[:macro_token, :token, '=', :expr].as        { |macro_token, token, symbol, macro|    op.macro(macro_token[0..-2], token, macro, symbol) }
-      r[:macro_token, :token, '||=', :expr].as      { |macro_token, token, symbol, macro|    op.macro(macro_token[0..-2], token, macro, symbol) }
-      r[:macro_token, :token, :do_exprs].as         { |macro_token, token, macro|       op.macro(macro_token[0..-2], token, macro) }
+      r[:macro_token, :token, '=', :expr].as        { |macro_token, token, symbol, macro|     op.macro(macro_token[0..-2], token, macro, symbol) }
+      r[:macro_token, :token, '||=', :expr].as      { |macro_token, token, symbol, macro|     op.macro(macro_token[0..-2], token, macro, symbol) }
+      r[:macro_token, :token, :do_exprs].as         { |macro_token, token, macro|             op.macro(macro_token[0..-2], token, macro) }
     end
 
     rule(:get_macro) do |r|
@@ -268,7 +268,10 @@ module Mudpot
     rule(:exprs) do |r|
       r[].as                    { op }
       r[:exprs, :lb]
-      r[:exprs, :lb, :exprs_line].as  { |exprs, _, i| exprs + [i] }
+      r[:exprs, :lb, :exprs_line].as  do |exprs, _, i| 
+        exprs = op[exprs] unless exprs.operator.nil?
+        exprs + [i]
+      end
       r[:exprs_line]
     end
 
