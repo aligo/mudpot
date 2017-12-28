@@ -32,6 +32,11 @@ describe Mudpot::Parser do
       a!{b: 1}
       b!
     """).to ast([[:scope_get, 1], 2])
+
+    expect("""
+      macro_set! b = 2
+      scope_get(c!, 1, b!, c!, 3)
+    """).to ast([:scope_get, nil, 1, 2, nil, 3])
   end
 
   it 'can parse block macro' do

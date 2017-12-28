@@ -39,10 +39,10 @@ module Mudpot
     def ast(compile = false, operators = {}, macro_scope = MacroScope.new)
       if @operator == :macro
         macro_scope, ops = macro_scope.send(*@args)
-        if ops
+        unless ops.nil? || ops.is_a?(Excluded)
           ast_with(ops, compile, operators, macro_scope)
         else
-          Excluded.new
+          ops
         end
       else
         if compile && @operator

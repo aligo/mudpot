@@ -12,6 +12,10 @@ module Mudpot
       self.class.new @macros.clone, @shareds
     end
 
+    def excluded
+      Expression::Excluded.new
+    end
+
     def merge_macros!(macros = {})
       @macros.merge!(macros)
       self
@@ -43,13 +47,13 @@ module Mudpot
         macro_init(token, macro, symbol)
       else
         @macros[token] = macro if token && macro
-        [self, nil]
+        [self, excluded]
       end
     end
 
     def macro_init(token, macro, symbol = '||=')
       @macros[token] ||= macro if token && macro
-      [self, nil]
+      [self, excluded]
     end
 
     def macro_get(token, args = nil)
