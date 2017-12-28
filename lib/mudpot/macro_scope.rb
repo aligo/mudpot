@@ -9,7 +9,7 @@ module Mudpot
     end
 
     def clone
-      MacroScope.new @macros.clone, @shareds
+      self.class.new @macros.clone, @shareds
     end
 
     def merge_macros!(macros = {})
