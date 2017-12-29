@@ -1,16 +1,17 @@
 module Mudpot
   
   class MacroScope
-    attr_reader :global, :scope, :shareds
+    attr_reader :global, :scope, :parent, :shareds
 
-    def initialize(global = {}, scope = {}, shareds = {})
+    def initialize(global = {}, scope = {}, parent = {}, shareds = {})
       @global   = global
       @scope    = scope
+      @parent   = parent
       @shareds  = shareds
     end
 
     def push(new_scope = {})
-      self.class.new @global, new_scope, @shareds
+      self.class.new @global, new_scope, @parent.clone.merge(@scope), @shareds
     end
 
     def excluded
@@ -51,15 +52,13 @@ module Mudpot
       if op.is_a?(Expression)
         if op.operator == :macro
           _, op = self.send(*op.args)
-        else
-          op.args.map!{|a| _extract(a) }
         end
       end
       op
     end
 
     def _get(token)
-      @scope[token] || @global[token]
+      @scope[token] || @parent[token] || @global[token]
     end
 
     def _set(scope, token, macro, symbol)

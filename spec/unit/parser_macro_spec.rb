@@ -201,7 +201,7 @@ describe Mudpot::Parser do
       mset! c = a!
       mset! d = b!
       @[c!, d!]
-    """).to ast(['hello', 'hello', [:list_list, 'hello', nil]])
+    """).to ast(['hello', 'hello', [:list_list, 'hello', 'hello']])
 
     expect("""
       mdef! a = str!
@@ -222,7 +222,7 @@ describe Mudpot::Parser do
         d!
         e!
       ]
-    """).to ast([:list_list, 'hello', nil, 'hello', nil, 'hello'])
+    """).to ast([:list_list, 'hello', 'hello', 'hello', 'hello', 'hello'])
 
     expect("""
       mdef! a do
