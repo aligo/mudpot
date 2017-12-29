@@ -167,7 +167,7 @@ describe Mudpot::Parser do
       d_macro!
       e_macro!
     """).to ast([
-      [:scope_get, nil],
+      [:scope_get],
       [:scope_get, [:hash_table_ht]], 
       [:scope_get, [:hash_table_ht, 'k', 'v']],
       [:scope_get, [:hash_table_ht, 'k', 'v2']],

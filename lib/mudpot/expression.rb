@@ -79,6 +79,8 @@ module Mudpot
           ret = ret[1..-1].join if ret[1..-1].all?{|a| a.is_a?(String) }
         when :hash_table_ht
           ret = [ret[0]] + Hash[ret[1..-1].each_slice(2).to_a].flat_map{|k,v| [k, v]}
+        else
+          ret.pop until ret.last
         end
       end
       ret
