@@ -242,4 +242,25 @@ describe Mudpot::Parser do
     """).to ast([:list_list, nil, [:hash_table_ht, 'k', 'v'], [:hash_table_ht, 'k2', 'v2']])
   end
 
+  it 'can get _macro_name and _macro_name_prev' do
+    expect("""
+      mdef! a = _macro_name!
+      mdef! b = _macro_name_prev!
+      mdef! c = b!
+      mdef! d do
+        a!
+        b!
+        c!
+      end
+      @[
+        _macro_name!
+        _macro_name_prev!
+        a!
+        b!
+        c!
+        d!
+      ]
+    """).to ast([:list_list, nil, nil, 'a', nil, 'c', ['a', 'd', 'c']])
+  end
+
 end
