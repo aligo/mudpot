@@ -35,7 +35,6 @@ module Mudpot
         new_scope = Hash[new_scope.map do |k, v|
           [k, _extract(v)]
         end]
-        new_scope.merge!({'_macro_name' => token, '_macro_name_prev' => self.scope['_macro_name']}.compact)
         [self.push(new_scope), macro]
       else
         [self, default]

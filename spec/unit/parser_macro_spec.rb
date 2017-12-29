@@ -192,25 +192,6 @@ describe Mudpot::Parser do
     """).to ast(['ccc', 'ccc', 'ccc'])
   end
 
-  it 'can get _macro_name and _macro_name_prev' do
-    expect("""
-      mdef! a = _macro_name!
-      mdef! b = _macro_name_prev!
-      mdef! c = b!
-      mdef! d do
-        a!
-        b!
-        c!
-      end
-      _macro_name!
-      _macro_name_prev!
-      a!
-      b!
-      c!
-      d!
-    """).to ast([nil, nil, 'a', nil, 'c', ['a', 'd', 'c']])
-  end
-
   it 'can handle macro scope' do
     expect("""
       mdef! a = 'hello'
