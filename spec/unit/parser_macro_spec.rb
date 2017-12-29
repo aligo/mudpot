@@ -171,7 +171,7 @@ describe Mudpot::Parser do
       [:scope_get, [:hash_table_ht]], 
       [:scope_get, [:hash_table_ht, 'k', 'v']],
       [:scope_get, [:hash_table_ht, 'k', 'v2']],
-      [:scope_get, [:hash_table_ht, 'k', 'v2', 'k', 'v']]
+      [:scope_get, [:hash_table_ht, 'k', 'v']]
     ])
   end
 
@@ -200,9 +200,8 @@ describe Mudpot::Parser do
       b!
       mset! c = a!
       mset! d = b!
-      c!
-      d!
-    """).to ast(['hello', 'hello', 'hello', nil])
+      @[c!, d!]
+    """).to ast(['hello', 'hello', [:list_list, 'hello', nil]])
 
     expect("""
       mdef! a = str!
@@ -216,12 +215,14 @@ describe Mudpot::Parser do
         mset! str = 'hello'
         a!{str: str!}
       end
-      a!{str: 'hello'}
-      b!{str: 'hello'}
-      c!{str: 'hello'}
-      d!
-      e!
-    """).to ast(['hello', nil, 'hello', nil, 'hello'])
+      @[
+        a!{str: 'hello'}
+        b!{str: 'hello'}
+        c!{str: 'hello'}
+        d!
+        e!
+      ]
+    """).to ast([:list_list, 'hello', nil, 'hello', nil, 'hello'])
 
     expect("""
       mdef! a do
@@ -233,10 +234,12 @@ describe Mudpot::Parser do
       mdef! c do
         b!{input: @{'k2': value!}}
       end
-      a!
-      b!
-      c!{value: 'v2'}
-    """).to ast([nil, [:hash_table_ht, 'k', 'v'], [:hash_table_ht, 'k2', 'v2']])
+      @[
+        a!
+        b!
+        c!{value: 'v2'}
+      ]
+    """).to ast([:list_list, nil, [:hash_table_ht, 'k', 'v'], [:hash_table_ht, 'k2', 'v2']])
   end
 
 end

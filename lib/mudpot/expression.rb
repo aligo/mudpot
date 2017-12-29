@@ -51,14 +51,9 @@ module Mudpot
         else
           operator = @operator
         end
-        ret = [ operator ].compact + @args.map do |arg|
+        optimize([ operator ].compact + @args.map do |arg|
           ast_with(arg, compile, operators, macro_scope)
-        end.reject {|a| a.is_a?(Excluded) }
-        if ret.count == 1 && !@operator
-          ret.first
-        else
-          ret
-        end
+        end)
       end
     end
 
@@ -71,6 +66,22 @@ module Mudpot
       elsif arg.is_a?(Integer) || arg.is_a?(Float) || arg.is_a?(String) || arg.is_a?(Symbol) || arg.is_a?(TrueClass) || arg.is_a?(FalseClass)
         arg
       end
+    end
+
+    def optimize(ret)
+      ret = ret.reject {|a| a.is_a?(Excluded) }.map {|a| a == [] ? nil : a }
+      if ret.count > 0
+        case @operator
+        when nil
+          ret = ret.compact
+          ret = ret.first if ret.count == 1
+        when :string_concat
+          ret = ret[1..-1].join if ret[1..-1].all?{|a| a.is_a?(String) }
+        when :hash_table_ht
+          ret = [ret[0]] + Hash[ret[1..-1].each_slice(2).to_a].flat_map{|k,v| [k, v]}
+        end
+      end
+      ret
     end
 
     def compile(operators, macro_scope = MacroScope.new)

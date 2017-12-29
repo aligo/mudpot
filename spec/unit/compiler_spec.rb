@@ -6,7 +6,7 @@ describe Mudpot::Compiler do
     macro_scope = Mudpot::MacroScope.new
     macro_scope.global['_import_base_'] = File.dirname(source_file)
 
-    expect(JSON.parse(Mudpot::Compiler.compile_to_json(source_file, operators, macro_scope))).to eq([[], [121, "var", "cccc"], 1])
+    expect(JSON.parse(Mudpot::Compiler.compile_to_json(source_file, operators, macro_scope))).to eq([[121, "var", "cccc"], 1])
   end
 
 
