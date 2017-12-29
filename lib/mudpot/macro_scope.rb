@@ -1,88 +1,88 @@
 module Mudpot
   
   class MacroScope
-    attr_reader :macros, :shareds
+    attr_reader :global, :scope, :shareds
 
-    def initialize(macros = {}, shareds = {})
-      @macros   = macros
+    def initialize(global = {}, scope = {}, shareds = {})
+      @global   = global
+      @scope    = scope
       @shareds  = shareds
     end
 
-    def clone
-      self.class.new @macros.clone, @shareds
+    def push(new_scope = {})
+      self.class.new @global, new_scope, @shareds
     end
 
     def excluded
       Expression::Excluded.new
     end
 
-    def merge_macros!(macros = {})
-      @macros.merge!(macros)
-      self
-    end
-
-    def [](token)
-      @macros[token]
-    end
-
-    def []=(token, macro)
-      @macros[token] = macro
-    end
-
-    def get_shared(key)
-      @shareds[key]
-    end
-
-    def set_shared(key, value)
-      @shareds[key] = value
-    end
-
     def import(file)
-      path = File.join(self['_import_base_'], file)
+      path = File.join(_get('_import_base_'), file)
       [self, Compiler.parse_file(path)]
     end
 
+    def macro_def(token, macro, symbol = '=')
+      _set(@global, token, macro, symbol)
+    end
+
     def macro_set(token, macro, symbol = '=')
-      case symbol
-      when '||='
-        macro_init(token, macro, symbol)
-      when '>>', '<<'
-        macro_merge(token, macro, symbol)
-      else
-        @macros[token] = macro if token && macro
-        [self, excluded]
-      end
+      _set(@scope, token, macro, symbol)
     end
 
-    def macro_init(token, macro, symbol = '||=')
-      @macros[token] ||= macro if token && macro
-      [self, excluded]
-    end
-
-    def macro_merge(token, macro, symbol = '>>')
-      if token && macro
-        if @macros[token] && @macros[token].is_a?(Expression) && macro.is_a?(Expression) && @macros[token].operator == macro.operator
-          new_args = symbol == '<<' ?  macro.args + @macros[token].args : @macros[token].args + macro.args
-          @macros[token] = Expression.new.send macro.operator, *new_args
-        else
-          @macros[token] = macro
-        end
-      end
-      [self, excluded]
-    end
-
-    def macro_get(token, default = nil, args = {})
-      if @macros[token]
-        args.merge!({'_macro_name' => token, '_macro_name_prev' => self['_macro_name']}.compact)
-        [self.clone.merge_macros!(args), @macros[token]]
+    def macro_get(token, default = nil, new_scope = {})
+      if macro = _get(token)
+        new_scope = Hash[new_scope.map do |k, v|
+          if v.is_a?(Expression) && v.operator == :macro
+            _, v = self.send(*v.args)
+          end
+          [k, v]
+        end]
+        new_scope.merge!({'_macro_name' => token, '_macro_name_prev' => self.scope['_macro_name']}.compact)
+        [self.push(new_scope), macro]
       else
         [self, default]
       end
     end
 
-
     alias mget macro_get
     alias mset macro_set
+    alias mdef macro_def
+
+    private
+
+    def _get(token)
+      @scope[token] || @global[token]
+    end
+
+    def _set(scope, token, macro, symbol)
+      case symbol
+      when '||='
+        _init(scope, token, macro, symbol)
+      when '>>', '<<'
+        _merge(scope, token, macro, symbol)
+      else
+        scope[token] = macro if token && macro
+        [self, excluded]
+      end
+    end
+
+    def _init(scope, token, macro, symbol)
+      scope[token] ||= macro if token && macro
+      [self, excluded]
+    end
+
+    def _merge(scope, token, macro, symbol = '>>')
+      if token && macro
+        if scope[token] && scope[token].is_a?(Expression) && macro.is_a?(Expression) && scope[token].operator == macro.operator
+          new_args = symbol == '<<' ?  macro.args + scope[token].args : scope[token].args + macro.args
+          scope[token] = Expression.new.send macro.operator, *new_args
+        else
+          scope[token] = macro
+        end
+      end
+      [self, excluded]
+    end
 
   end
 

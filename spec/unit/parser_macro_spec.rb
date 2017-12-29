@@ -59,15 +59,15 @@ describe Mudpot::Parser do
     """).to ast([:cond_if, 1, 2, 3])
 
     expect("""
-      macro_set! if_macro do
+      macro_def! if_macro do
         if (check!) {
           true!
         } else {
           false!
         }
       end
-      macro_set! new_if_macro do
-        if_macro!{check: 1}
+      macro_def! new_if_macro do
+        if_macro!{check: 1, true: true!, false: false!}
       end
       new_if_macro!{true: 2, false: 3}
     """).to ast([:cond_if, 1, 2, 3])
@@ -94,7 +94,7 @@ describe Mudpot::Parser do
   it 'can parse init macro' do
     expect("""
       macro_set! a do
-        macro_init! str = 'hello'
+        mset! str ||= 'hello'
         $a = str!
       end
       a!
@@ -142,24 +142,24 @@ describe Mudpot::Parser do
 
   it 'can parse merge macro' do
     expect("""
-      macro_set! a_macro do
+      mdef! a_macro do
         scope_get(data!)
       end
-      macro_set! b_macro do
-        macro_set! data >> @{}
-        a_macro!
+      mdef! b_macro do
+        mset! data >> @{}
+        a_macro!{data: data!}
       end
-      macro_set! c_macro do
-        macro_set! data >> @{'k': 'v'}
-        b_macro!
+      mdef! c_macro do
+        mset! data >> @{'k': 'v'}
+        b_macro!{data: data!}
       end
-      macro_set! d_macro do
-        macro_set! data << @{'k': 'v2'}
-        b_macro!
+      mdef! d_macro do
+        mset! data << @{'k': 'v2'}
+        b_macro!{data: data!}
       end
-      macro_set! e_macro do
-        macro_set! data << @{'k': 'v2'}
-        c_macro!
+      mdef! e_macro do
+        mset! data << @{'k': 'v2'}
+        c_macro!{data: data!}
       end
       a_macro!
       b_macro!
@@ -194,10 +194,10 @@ describe Mudpot::Parser do
 
   it 'can get _macro_name and _macro_name_prev' do
     expect("""
-      mset! a = _macro_name!
-      mset! b = _macro_name_prev!
-      mset! c = b!
-      mset! d do
+      mdef! a = _macro_name!
+      mdef! b = _macro_name_prev!
+      mdef! c = b!
+      mdef! d do
         a!
         b!
         c!
@@ -209,6 +209,38 @@ describe Mudpot::Parser do
       c!
       d!
     """).to ast([nil, nil, 'a', nil, 'c', ['a', 'd', 'c']])
+  end
+
+  it 'can handle macro scope' do
+    expect("""
+      mdef! a = 'hello'
+      mset! b = 'hello'
+      a!
+      b!
+      mset! c = a!
+      mset! d = b!
+      c!
+      d!
+    """).to ast(['hello', 'hello', 'hello', nil])
+
+    expect("""
+      mdef! a = str!
+      mdef! b = a!
+      mdef! c = a!{str: str!}
+      mdef! d do
+        mset! str = 'hello'
+        a!
+      end
+      mdef! e do
+        mset! str = 'hello'
+        a!{str: str!}
+      end
+      a!{str: 'hello'}
+      b!{str: 'hello'}
+      c!{str: 'hello'}
+      d!
+      e!
+    """).to ast(['hello', nil, 'hello', nil, 'hello'])
   end
 
 end

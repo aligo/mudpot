@@ -1,6 +1,6 @@
 import!('lib/sub/foot.mud')
 
-macro_set! test do
+mdef! test do
   $var = str!
 end
 
