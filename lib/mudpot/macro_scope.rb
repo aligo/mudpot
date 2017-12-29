@@ -33,10 +33,7 @@ module Mudpot
     def macro_get(token, default = nil, new_scope = {})
       if macro = _get(token)
         new_scope = Hash[new_scope.map do |k, v|
-          if v.is_a?(Expression) && v.operator == :macro
-            _, v = self.send(*v.args)
-          end
-          [k, v]
+          [k, _extract(v)]
         end]
         new_scope.merge!({'_macro_name' => token, '_macro_name_prev' => self.scope['_macro_name']}.compact)
         [self.push(new_scope), macro]
@@ -50,6 +47,17 @@ module Mudpot
     alias mdef macro_def
 
     private
+
+    def _extract(op)
+      if op.is_a?(Expression)
+        if op.operator == :macro
+          _, op = self.send(*op.args)
+        else
+          op.args.map!{|a| _extract(a) }
+        end
+      end
+      op
+    end
 
     def _get(token)
       @scope[token] || @global[token]

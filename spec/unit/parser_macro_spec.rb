@@ -241,6 +241,21 @@ describe Mudpot::Parser do
       d!
       e!
     """).to ast(['hello', nil, 'hello', nil, 'hello'])
+
+    expect("""
+      mdef! a do
+        input!
+      end
+      mdef! b do
+        a!{input: input!?=@{'k': 'v'}}
+      end
+      mdef! c do
+        b!{input: @{'k2': value!}}
+      end
+      a!
+      b!
+      c!{value: 'v2'}
+    """).to ast([nil, [:hash_table_ht, 'k', 'v'], [:hash_table_ht, 'k2', 'v2']])
   end
 
 end
