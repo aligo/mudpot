@@ -30,6 +30,7 @@ module Mudpot
     rule('>')
     rule('<')
     rule('||=')
+    rule('?=')
     rule('!')
     rule('?')
     rule('||') % :left ^ 3
@@ -222,8 +223,9 @@ module Mudpot
 
     rule(:get_macro) do |r|
       r[:macro_token].as                            { |macro_token|             op.macro(:macro_get, macro_token[0..-2]) }
-      r[:macro_token, '{', :get_macro_args, '}'].as { |macro_token, _, args, _| op.macro(:macro_get, macro_token[0..-2], args) }
+      r[:macro_token, '{', :get_macro_args, '}'].as { |macro_token, _, args, _| op.macro(:macro_get, macro_token[0..-2], nil, args) }
       r[:macro_token, '(', :macro_args, ')'].as     { |macro_token, _, args, _| op.macro(macro_token[0..-2], *args) }
+      r[:macro_token, '?=', :expr].as               { |macro_token, _, expr|    op.macro(:macro_get, macro_token[0..-2], expr) }
     end
 
     rule(:get_macro_arg) do |r|

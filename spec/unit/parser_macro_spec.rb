@@ -140,7 +140,6 @@ describe Mudpot::Parser do
   end
 
 
-
   it 'can parse merge macro' do
     expect("""
       macro_set! a_macro do
@@ -158,11 +157,58 @@ describe Mudpot::Parser do
         macro_set! data << @{'k': 'v2'}
         b_macro!
       end
+      macro_set! e_macro do
+        macro_set! data << @{'k': 'v2'}
+        c_macro!
+      end
       a_macro!
       b_macro!
       c_macro!
       d_macro!
-    """).to ast([[:scope_get, nil], [:scope_get, [:hash_table_ht]], [:scope_get, [:hash_table_ht, 'k', 'v']], [:scope_get, [:hash_table_ht, 'k', 'v2', 'k', 'v']]])
+      e_macro!
+    """).to ast([
+      [:scope_get, nil],
+      [:scope_get, [:hash_table_ht]], 
+      [:scope_get, [:hash_table_ht, 'k', 'v']],
+      [:scope_get, [:hash_table_ht, 'k', 'v2']],
+      [:scope_get, [:hash_table_ht, 'k', 'v2', 'k', 'v']]
+    ])
+  end
+
+  it 'can parse alias mget mset' do
+    expect("""
+      mset! a = 'ccc'
+      a!
+      mget!(a)
+    """).to ast(['ccc', 'ccc'])
+  end
+
+  it 'can parse alias mget with default' do
+    expect("""
+      mset! c = 'ccc'
+      a!?='ccc'
+      b!?='ccc'
+      c!?='bbb'
+    """).to ast(['ccc', 'ccc', 'ccc'])
+  end
+
+  it 'can get _macro_name and _macro_name_prev' do
+    expect("""
+      mset! a = _macro_name!
+      mset! b = _macro_name_prev!
+      mset! c = b!
+      mset! d do
+        a!
+        b!
+        c!
+      end
+      _macro_name!
+      _macro_name_prev!
+      a!
+      b!
+      c!
+      d!
+    """).to ast([nil, nil, 'a', nil, 'c', ['a', 'd', 'c']])
   end
 
 end

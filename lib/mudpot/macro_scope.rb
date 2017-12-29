@@ -71,17 +71,18 @@ module Mudpot
       [self, excluded]
     end
 
-    def macro_get(token, args = nil)
+    def macro_get(token, default = nil, args = {})
       if @macros[token]
-        if args
-          [self.clone.merge_macros!(args), @macros[token]]
-        else
-          [self, @macros[token]]
-        end
+        args.merge!({'_macro_name' => token, '_macro_name_prev' => self['_macro_name']}.compact)
+        [self.clone.merge_macros!(args), @macros[token]]
       else
-        [self, nil]
+        [self, default]
       end
     end
+
+
+    alias mget macro_get
+    alias mset macro_set
 
   end
 
