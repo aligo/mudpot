@@ -38,7 +38,7 @@ module Mudpot
 
     def ast(compile = false, operators = {}, macro_scope = MacroScope.new)
       if @operator == :macro
-        macro_scope, ops = macro_scope.send(*@args)
+        macro_scope, ops = macro_scope.call_macro(*@args)
         unless ops.nil? || ops.is_a?(Excluded)
           ast_with(ops, compile, operators, macro_scope)
         else
@@ -59,7 +59,7 @@ module Mudpot
 
     def ast_with(arg, compile, operators, macro_scope = MacroScope.new)
       if ( arg.is_a? Expression ) && ( arg.operator.nil? ) && ( arg.args.count == 1 )
-        arg = arg.args[0] 
+        arg = arg.args[0]
       end
       if arg.is_a? Expression
         arg.ast(compile, operators, macro_scope)
@@ -79,6 +79,7 @@ module Mudpot
           ret = ret[1..-1].join if ret[1..-1].all?{|a| a.is_a?(String) }
         when :hash_table_ht
           ret = [ret[0]] + Hash[ret[1..-1].each_slice(2).to_a].flat_map{|k,v| [k, v]}
+        when :list_list
         else
           ret.pop until ret.last
         end

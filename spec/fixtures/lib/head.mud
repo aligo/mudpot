@@ -1,6 +1,6 @@
 import!('lib/sub/foot.mud')
 
-mdef! test do
+mdef! test (str) do
   $var = str!
 end
 

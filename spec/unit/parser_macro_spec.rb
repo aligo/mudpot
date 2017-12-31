@@ -1,171 +1,165 @@
 describe Mudpot::Parser do
 
-  it 'can parse one line macro' do
+  it 'can parse set macro one line' do
     expect("""
       macro_set! a = 1
       a!
     """).to ast(1)
 
     expect("""
-      macro_set!('a', 1)
-      a!
-    """).to ast(1)
-
-    expect("""
-      macro_set! a = 1
+      mset! a = 1
       scope_get(a!)
     """).to ast([:scope_get, 1])
 
     expect("""
-      macro_set! a = scope_get(1)
+      mset! a = scope_get(1)
       a!
     """).to ast([:scope_get, 1])
-
-    expect("""
-      macro_set! a = scope_get(b!)
-      a!{b: 1}
-    """).to ast([:scope_get, 1])
-
-    expect("""
-      macro_set! b = 2
-      macro_set! a = scope_get(b!)
-      a!{b: 1}
-      b!
-    """).to ast([[:scope_get, 1], 2])
-
-    expect("""
-      macro_set! b = 2
-      scope_get(c!, 1, b!, c!, 3)
-    """).to ast([:scope_get, nil, 1, 2, nil, 3])
   end
 
-  it 'can parse block macro' do
+  it 'can parse def macro' do
     expect("""
-      macro_set! a do
+      macro_def! a = 1
+      macro_set! b = a!
+      macro_set! c = b!
+      @[a!, b!, c!]
+    """).to ast([:list_list, 1, 1, nil])
+  end
+
+  it 'can parse set macro block' do
+    expect("""
+      macro_set! a (str) do
         $a = str!
       end
-      a!{str: 'hello'}
+      a!('hello')
     """).to ast([:scope_set, 'a', 'hello'])
 
     expect("""
-      macro_set! if_macro do
-        if (check!) {
-          true!
-        } else {
-          false!
-        }
+      macro_set! a (str = 'zzz') do
+        $a = str!
       end
-      if_macro!{check: 1, true: 2, false: 3}
-    """).to ast([:cond_if, 1, 2, 3])
+      a!
+      a!('hello')
+    """).to ast([[:scope_set, 'a', 'zzz'] ,[:scope_set, 'a', 'hello']])
 
     expect("""
-      macro_def! if_macro do
-        if (check!) {
-          true!
-        } else {
-          false!
-        }
+      macro_set! a (v1 = 1, v2 = 2) do
+        @[v1!, v2!]
       end
-      macro_def! new_if_macro do
-        if_macro!{check: 1, true: true!, false: false!}
-      end
-      new_if_macro!{true: 2, false: 3}
-    """).to ast([:cond_if, 1, 2, 3])
+      a!
+      a!(nil, 3)
+      a!(3)
+    """).to ast([[:list_list, 1, 2], [:list_list, 1, 3], [:list_list, 3, 2]])
 
     expect("""
-      macro_set! if_macro do
-        if (check!) {
-          true!
-        } else {
-          false!
-        }
+      mdef! a (v = 1) do
+        v!
       end
-      if_macro!{
-        check: 1
-        true: do
-          $a = 1
-          $b = 2
-        end
-        false: 3
-      }
-    """).to ast([:cond_if, 1, [[:scope_set, 'a', 1], [:scope_set, 'b', 2]], 3])
+      mdef! b (v = 2) do
+        a!
+        a!(3)
+        v!
+      end
+      a!
+      a!(2)
+      b!
+      b!(a!)
+      b!(a!(4))
+      b!(a!(b!))
+    """).to ast([1, 2, [1, 3, 2], [1, 3, 1], [1, 3, 4], [1, 3, [1, 3, 2]]])
   end
 
-  it 'can parse init macro' do
+  it 'can extract macro args' do
     expect("""
-      macro_set! a do
+      mset! a = 1
+      mdef! b (value) do
+        value!
+      end
+      b!(a!)
+    """).to ast(1)
+    expect("""
+      mdef! a (value) do
+        value!
+      end
+      mdef! b (value) do
+        a!(value!)
+      end
+      a!(1)
+      b!(2)
+    """).to ast([1, 2])
+  end
+
+  it 'can parse init macro' do 
+    expect("""
+      macro_set! a (str) do
         mset! str ||= 'hello'
         $a = str!
       end
       a!
-      a!{str: 'world'}
+      a!('world')
     """).to ast([[:scope_set, 'a', 'hello'], [:scope_set, 'a', 'world']])
 
     expect("""
-      macro_set! a do
-        macro_set! str ||= 'hello'
-        $a = str!
+      mdef! str = 'hello'
+      macro_set! a (str) do
+        str!
+      end
+      macro_set! b (str) do
+        mset! str ||= 'the'
+        str!
       end
       a!
-      a!{str: 'world'}
-    """).to ast([[:scope_set, 'a', 'hello'], [:scope_set, 'a', 'world']])
-
-    expect("""
-      macro_set! a do
-        3
-      end
-      macro_set! b do
-        macro_set! str ||= 'hello'
-        $a = str!
-      end
-      a!
-      b!{str: 'world'}
-    """).to ast([3, [:scope_set, 'a', 'world']])
-
-    expect("""
-      macro_set! a do
-        3
-      end
-      macro_set! b do
-        macro_set! str ||= 'hello'
-        $a = str!
-      end
-      macro_set! c do
-        1
-      end
-      a!
-      b!{str: 'world'}
-      c!
-    """).to ast([3, [:scope_set, 'a', 'world'], 1])
+      b!
+      a!('world')
+      b!('yes')
+    """).to ast(['hello', 'the', 'world', 'yes'])
   end
 
 
   it 'can parse merge macro' do
     expect("""
-      mdef! a_macro do
+      mset! a = @{'k': 'v'}
+      mset! a << @{'k2': 'v2'}
+      a!
+      mset! b = @{'k': 'v'}
+      mset! b >> @{'k2': 'v2'}
+      b!
+    """).to ast([[:hash_table_ht, 'k', 'v', 'k2', 'v2'], [:hash_table_ht, 'k2', 'v2', 'k', 'v']])
+
+    expect("""
+      mset! a = @{'k': 'v1'}
+      mset! a << @{'k': 'v2'}
+      a!
+      mset! b = @{'k': 'v1'}
+      mset! b >> @{'k': 'v2'}
+      b!
+    """).to ast([[:hash_table_ht, 'k', 'v2'], [:hash_table_ht, 'k', 'v1']])
+
+    expect("""
+      mdef! a_macro (data) do
         scope_get(data!)
       end
-      mdef! b_macro do
+      mdef! b_macro (data) do
         mset! data >> @{}
-        a_macro!{data: data!}
+        a_macro!(data!)
       end
-      mdef! c_macro do
+      mdef! c_macro (data) do
         mset! data >> @{'k': 'v'}
-        b_macro!{data: data!}
+        b_macro!(data!)
       end
-      mdef! d_macro do
+      mdef! d_macro (data) do
         mset! data << @{'k': 'v2'}
-        b_macro!{data: data!}
+        b_macro!(data!)
       end
-      mdef! e_macro do
-        mset! data << @{'k': 'v2'}
-        c_macro!{data: data!}
+      mdef! e_macro (data) do
+        mset! data >> @{'k': 'v2'}
+        a_macro!(data!)
       end
       a_macro!
       b_macro!
       c_macro!
       d_macro!
-      e_macro!
+      e_macro!(@{'k': 'v'})
     """).to ast([
       [:scope_get],
       [:scope_get, [:hash_table_ht]], 
@@ -173,14 +167,6 @@ describe Mudpot::Parser do
       [:scope_get, [:hash_table_ht, 'k', 'v2']],
       [:scope_get, [:hash_table_ht, 'k', 'v']]
     ])
-  end
-
-  it 'can parse alias mget mset' do
-    expect("""
-      mset! a = 'ccc'
-      a!
-      mget!(a)
-    """).to ast(['ccc', 'ccc'])
   end
 
   it 'can parse alias mget with default' do
@@ -201,43 +187,23 @@ describe Mudpot::Parser do
       mset! c = a!
       mset! d = b!
       @[c!, d!]
-    """).to ast(['hello', 'hello', [:list_list, 'hello', 'hello']])
+    """).to ast(['hello', 'hello', [:list_list, 'hello', nil]])
+
 
     expect("""
-      mdef! a = str!
-      mdef! b = a!
-      mdef! c = a!{str: str!}
-      mdef! d do
-        mset! str = 'hello'
-        a!
-      end
-      mdef! e do
-        mset! str = 'hello'
-        a!{str: str!}
-      end
-      @[
-        a!{str: 'hello'}
-        b!{str: 'hello'}
-        c!{str: 'hello'}
-        d!
-        e!
-      ]
-    """).to ast([:list_list, 'hello', 'hello', 'hello', 'hello', 'hello'])
-
-    expect("""
-      mdef! a do
+      mdef! a (input) do
         input!
       end
-      mdef! b do
-        a!{input: input!?=@{'k': 'v'}}
+      mdef! b (input) do
+        a!(input!?=@{'k': 'v'})
       end
-      mdef! c do
-        b!{input: @{'k2': value!}}
+      mdef! c (input) do
+        b!(@{'k2': input!})
       end
       @[
         a!
         b!
-        c!{value: 'v2'}
+        c!('v2')
       ]
     """).to ast([:list_list, nil, [:hash_table_ht, 'k', 'v'], [:hash_table_ht, 'k2', 'v2']])
   end

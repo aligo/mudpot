@@ -1,5 +1,5 @@
 import!('lib/head.mud')
 
-test!{str: 'cccc'}
+test!('cccc')
 
 test2!

@@ -217,38 +217,34 @@ module Mudpot
     end
 
     rule(:def_macro) do |r|
-      r[:macro_token, :token, :macro_symbol, :expr].as        { |macro_token, token, symbol, macro|     op.macro(macro_token[0..-2], token, macro, symbol) }
-      r[:macro_token, :token, :do_exprs].as                   { |macro_token, token, macro|             op.macro(macro_token[0..-2], token, macro) }
+      r[:macro_token, :token, :macro_symbol, :expr].as                { |macro_token, token, symbol, macro|         op.macro(macro_token[0..-2], token, macro, symbol) }
+      r[:macro_token, :token, :do_exprs].as                           { |macro_token, token, macro|                 op.macro(macro_token[0..-2], token, macro) }
+      r[:macro_token, :token, '(', :macro_params, ')', :do_exprs].as  { |macro_token, token, _, params, _, macro|   op.macro(macro_token[0..-2], token, macro, '=', params) }
     end
 
     rule(:get_macro) do |r|
-      r[:macro_token].as                            { |macro_token|             op.macro(:macro_get, macro_token[0..-2]) }
-      r[:macro_token, '{', :get_macro_args, '}'].as { |macro_token, _, args, _| op.macro(:macro_get, macro_token[0..-2], nil, args) }
       r[:macro_token, '(', :macro_args, ')'].as     { |macro_token, _, args, _| op.macro(macro_token[0..-2], *args) }
-      r[:macro_token, '?=', :expr].as               { |macro_token, _, expr|    op.macro(:macro_get, macro_token[0..-2], expr) }
-    end
-
-    rule(:get_macro_arg) do |r|
-      r[:token, ':', :expr].as { |key, _, value| {key => value} }
-    end
-
-    rule(:get_macro_args) do |r|
-      r[].as                                              {             {} }
-      r[:get_macro_args, :args_comma].as                  { |ht, _|     ht }
-      r[:get_macro_args, :args_comma, :get_macro_arg].as  { |ht, _, i|  ht.merge(i) }
-      r[:get_macro_arg].as                                { |i|         i }
-    end
-
-    rule(:macro_arg) do |r|
-      r[:token]
-      r[:expr]
+      r[:macro_token].as                            { |macro_token|             op.macro(:macro_get, macro_token[0..-2]) }
+      r[:macro_token, '?=', :expr].as               { |macro_token, _, default| op.macro(:macro_get, macro_token[0..-2], [], default) }
     end
 
     rule(:macro_args) do |r|
+      r[].as                                          {             [] }
+      r[:macro_args, :args_comma].as                  { |a, _|      a }
+      r[:macro_args, :args_comma, :expr].as           { |a, _, i|   a + [i] }
+      r[:expr].as                                     { |i|         [i] }
+    end
+
+    rule(:macro_param) do |r|
+      r[:token].as                                        { |param|               [param] }
+      r[:token, '=', :expr].as                            { |param, _, default|      [param, default] }
+    end
+
+    rule(:macro_params) do |r|
       r[].as                                              {             [] }
-      r[:macro_args, :args_comma].as                      { |a, _|      a }
-      r[:macro_args, :args_comma, :macro_arg].as          { |a, _, i|   a + [i] }
-      r[:macro_arg].as                                    { |i|         [i] }
+      r[:macro_params, :args_comma].as                    { |a, _|      a }
+      r[:macro_params, :args_comma, :macro_param].as      { |a, _, i|   a + [i] }
+      r[:macro_param].as                                  { |i|         [i] }
     end
 
     rule(:expr) do |r|
