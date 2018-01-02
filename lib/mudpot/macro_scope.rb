@@ -41,7 +41,7 @@ module Mudpot
     end
 
     define_macro :import do |file|
-      path = File.join(_get('_import_base_'), file)
+      path = File.join(_get('_import_base_')[:body], file)
       [self, Compiler.parse_file(path)]
     end
 
@@ -70,6 +70,10 @@ module Mudpot
       else
         [self, default]
       end
+    end
+
+    def set_global(token, value)
+      _set(@global, token, value)
     end
 
     private
