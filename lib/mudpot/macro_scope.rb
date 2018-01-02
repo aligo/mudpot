@@ -59,12 +59,14 @@ module Mudpot
 
     define_macro :macro_apply, :mapply do |macro, args = [], default = nil|
       if macro
-        new_scope = self.push
         if macro[:params]
+          new_scope = self.push
           macro[:params].each.with_index do |param, i|
             value = (args.is_a?(Hash) ? args[param[0]] : args[i]) || param[1]
             new_scope.macro_set(param[0], _extract(value)) if value
           end
+        else
+          new_scope = self
         end
         [new_scope, macro[:body]]
       else

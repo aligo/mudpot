@@ -23,7 +23,7 @@ describe Mudpot::Parser do
       macro_set! b = a!
       macro_set! c = b!
       @[a!, b!, c!]
-    """).to ast([:list_list, 1, 1, nil])
+    """).to ast([:list_list, 1, 1, 1])
   end
 
   it 'can parse set macro block' do
@@ -187,7 +187,7 @@ describe Mudpot::Parser do
       mset! c = a!
       mset! d = b!
       @[c!, d!]
-    """).to ast(['hello', 'hello', [:list_list, 'hello', nil]])
+    """).to ast(['hello', 'hello', [:list_list, 'hello', 'hello']])
 
 
     expect("""
@@ -219,6 +219,22 @@ describe Mudpot::Parser do
       a!{input: '1'}
       b!{a: 1, b: 2}
     """).to ast(['1', [:list_list, 1, 2]])
+
+    expect(%{
+      mdef! g = 'ccc'
+      mdef! a (data, v = 'zzz') do
+        mset! data >> @{'k': v!}
+        data!
+      end
+      mdef! b (data, v = "\#{g!}") do
+        mset! data >> @{'k': v!}
+        data!
+      end
+      a!
+      b!
+      a!(@{'k2': 'v2'}, 'aaa')
+      b!{data: @{'k': 'v3'}, v: 'ggg'}
+    }).to ast([[:hash_table_ht, "k", "zzz"], [:hash_table_ht, "k", "ccc"], [:hash_table_ht, "k", "aaa", "k2", "v2"], [:hash_table_ht, "k", "v3"]])
   end
 
 end
