@@ -52,8 +52,7 @@ module Mudpot
             new_scope.macro_set(param[0], value) if value
           end
         end
-        ret = new_scope.extract(macro[:body])
-        ret
+        new_scope.extract(macro[:body])
       else
         default
       end
@@ -74,9 +73,9 @@ module Mudpot
     def extract(op)
       if op.is_a?(Expression)
         op = op.clone
-        op.args.map.with_index {|a, i| op.set_arg(i, extract(a)) }
+        op.args.each.with_index {|a, i| op.set_arg(i, extract(a)) }
         if op.operator == :macro
-          op = call_macro op.macro_operator, op.args
+          op = call_macro op.macro_method, op.args
         end
       elsif op.is_a?(Array)
         op = op.map{|a| extract(a)}
@@ -101,20 +100,18 @@ module Mudpot
       case symbol
       when '||='
         scope[token] ||= macro
-        excluded
       when '>>', '<<'
         if scope_macro = _get(token)
           if scope_macro[:body].is_a?(Expression) && macro[:body].is_a?(Expression) && scope_macro[:body].operator == macro[:body].operator
             new_args = ( symbol == '<<' ) ?  scope_macro[:body].args + macro[:body].args : macro[:body].args + scope_macro[:body].args
-            macro[:body] = Expression.new.send scope_macro[:body].operator, *new_args
+            macro[:body] = Expression.new scope_macro[:body].operator, scope_macro[:body].macro_method, new_args
           end
         end
         scope[token] = macro
-        excluded
       else
         scope[token] = macro
-        excluded
       end
+      excluded
     end
 
   end

@@ -2,23 +2,23 @@ require 'mudpot/macro_scope'
 
 module Mudpot
   class Expression
-    attr_reader :operator, :macro_operator, :args
+    attr_reader :operator, :macro_method, :args
 
     class Excluded; end
 
-    def initialize(operator = nil, macro_operator = nil, args = [])
+    def initialize(operator = nil, macro_method = nil, args = [])
       @operator = operator
-      @macro_operator = macro_operator
+      @macro_method = macro_method
       @args = args
     end
 
     def clone
-      self.class.new @operator, @macro_operator, args.clone
+      self.class.new @operator, @macro_method, args.clone
     end
 
     def method_missing(method, *args)
       @operator = method.to_s.downcase.to_sym
-      @macro_operator = args.shift if @operator == :macro
+      @macro_method = args.shift if @operator == :macro
       @args = args
       self
     end
@@ -44,7 +44,7 @@ module Mudpot
 
     def ast(compile = false, operators = {}, macro_scope = MacroScope.new)
       if @operator == :macro
-        ops = macro_scope.call_macro @macro_operator, @args
+        ops = macro_scope.call_macro @macro_method, @args
         ast_with ops, compile, operators, macro_scope
       else
         if compile && @operator

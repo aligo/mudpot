@@ -218,7 +218,7 @@ module Mudpot
 
     rule(:def_macro) do |r|
       r[:macro_token, :token, :macro_symbol, :expr].as                { |macro_token, token, symbol, macro|         op.macro(macro_token[0..-2], token, macro, symbol) }
-      r[:macro_token, :token, :do_exprs].as                           { |macro_token, token, macro|                 op.macro(macro_token[0..-2], token, macro, '=', [], true) }
+      r[:macro_token, :token, :do_exprs].as                           { |macro_token, token, macro|                 op.macro(macro_token[0..-2], token, macro, '=', nil, true) }
       r[:macro_token, :token, '(', :macro_params, ')', :do_exprs].as  { |macro_token, token, _, params, _, macro|   op.macro(macro_token[0..-2], token, macro, '=', params, true) }
     end
 
