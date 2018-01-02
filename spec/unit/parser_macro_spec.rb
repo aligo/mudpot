@@ -208,4 +208,17 @@ describe Mudpot::Parser do
     """).to ast([:list_list, nil, [:hash_table_ht, 'k', 'v'], [:hash_table_ht, 'k2', 'v2']])
   end
 
+  it 'can pass hash args' do
+    expect("""
+      mdef! a (input) do
+        input!
+      end
+      mdef! b (a,b) do
+        @[a!,b!]
+      end
+      a!{input: '1'}
+      b!{a: 1, b: 2}
+    """).to ast(['1', [:list_list, 1, 2]])
+  end
+
 end

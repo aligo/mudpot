@@ -223,9 +223,21 @@ module Mudpot
     end
 
     rule(:get_macro) do |r|
-      r[:macro_token, '(', :macro_args, ')'].as     { |macro_token, _, args, _| op.macro(macro_token[0..-2], *args) }
-      r[:macro_token].as                            { |macro_token|             op.macro(:macro_get, macro_token[0..-2]) }
-      r[:macro_token, '?=', :expr].as               { |macro_token, _, default| op.macro(:macro_get, macro_token[0..-2], [], default) }
+      r[:macro_token, '(', :macro_args, ')'].as       { |macro_token, _, args, _| op.macro(macro_token[0..-2], *args) }
+      r[:macro_token, '{', :macro_hash_args, '}'].as  { |macro_token, _, args, _| op.macro(:macro_get, macro_token[0..-2], args) }
+      r[:macro_token].as                              { |macro_token|             op.macro(:macro_get, macro_token[0..-2]) }
+      r[:macro_token, '?=', :expr].as                 { |macro_token, _, default| op.macro(:macro_get, macro_token[0..-2], [], default) }
+    end
+
+    rule(:macro_hash_arg) do |r|
+      r[:token, ':', :expr].as { |key, _, value| {key => value} }
+    end
+
+    rule(:macro_hash_args) do |r|
+      r[].as                                                {             {} }
+      r[:macro_hash_args, :args_comma].as                   { |ht, _|     ht }
+      r[:macro_hash_args, :args_comma, :macro_hash_arg].as  { |ht, _, i|  ht.merge(i) }
+      r[:macro_hash_arg].as                                 { |i|         i }
     end
 
     rule(:macro_args) do |r|

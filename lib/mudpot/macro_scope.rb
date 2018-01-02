@@ -62,9 +62,8 @@ module Mudpot
         new_scope = self.push
         if macro[:params]
           macro[:params].each.with_index do |param, i|
-            if value = ( args[i] || param[1] )
-              new_scope.macro_set(param[0], _extract(value))
-            end
+            value = (args.is_a?(Hash) ? args[param[0]] : args[i]) || param[1]
+            new_scope.macro_set(param[0], _extract(value)) if value
           end
         end
         [new_scope, macro[:body]]
