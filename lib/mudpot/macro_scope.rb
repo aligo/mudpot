@@ -24,15 +24,11 @@ module Mudpot
       self.class.new @global, @shareds
     end
 
-    def method_missing(method, *args)
-      macro_get method.to_s, args
-    end
-
     def excluded
       Expression::Excluded.new
     end
 
-    def call_macro(method, *args)
+    def call_macro(method, args)
       if @@macro_methods.include?(method.to_sym)
         send method.to_sym, *args
       else
@@ -42,11 +38,25 @@ module Mudpot
 
     define_macro :import do |file|
       path = File.join(_get('_import_base_')[:body], file)
-      [self, Compiler.parse_file(path)]
+      Compiler.parse_file(path)
     end
 
     define_macro :macro_get, :mget do |token, args = [], default = nil|
-      macro_apply(_get(token), args, default)
+      if macro = _get(token)
+        new_scope = self.push
+        if macro[:params]
+          macro[:params].each.with_index do |param, i|
+            value = (args.is_a?(Hash) ? args[param[0]] : args[i])
+            value = extract(value) if value.is_a?(Expression)
+            value ||= param[1]
+            new_scope.macro_set(param[0], value) if value
+          end
+        end
+        ret = new_scope.extract(macro[:body])
+        ret
+      else
+        default
+      end
     end
 
     define_macro :macro_set, :mset do |token, macro, symbol = '=', params = nil, block = nil|
@@ -57,64 +67,53 @@ module Mudpot
       _set(@global, token, macro, symbol, params, block)
     end
 
-    define_macro :macro_apply, :mapply do |macro, args = [], default = nil|
-      if macro
-        if macro[:block]
-          new_scope = self.push
-          macro[:params].each.with_index do |param, i|
-            value = (args.is_a?(Hash) ? args[param[0]] : args[i]) || param[1]
-            new_scope.macro_set(param[0], _extract(value)) if value
-          end
-        else
-          new_scope = self
-        end
-        [new_scope, macro[:body]]
-      else
-        [self, default]
-      end
-    end
-
     def set_global(token, value)
       _set(@global, token, value)
     end
 
-    private
-
-    def _extract(op)
+    def extract(op)
       if op.is_a?(Expression)
-        if op.operator == :macro && [:mget, :macro_get].include?(op.args[0].to_sym)
-          op = Expression.new.macro :macro_apply, _get(op.args[1]), *op.args[2..-1]
-        else
-          op.args.map!{|a| _extract(a) }
+        op = op.clone
+        op.args.map.with_index {|a, i| op.set_arg(i, extract(a)) }
+        if op.operator == :macro
+          op = call_macro op.macro_operator, op.args
         end
+      elsif op.is_a?(Array)
+        op = op.map{|a| extract(a)}
       end
       op
     end
+
+    private
 
     def _get(token)
       @scope[token] || @global[token]
     end
 
     def _set(scope, token, macro, symbol = '=', params = nil, block = nil)
-      macro = { body: macro, params: params, block: block }.compact
+      if params
+        params.map! do |param|
+          param[1] ? [param[0], extract(param[1])] : param
+        end
+      end
+      macro = extract(macro) unless block
+      macro = { body: macro, params: params }.compact
       case symbol
       when '||='
         scope[token] ||= macro
+        excluded
       when '>>', '<<'
         if scope_macro = _get(token)
-          if scope_macro[:body].operator == :macro && scope_macro[:body].args[0] == :macro_apply
-            _, scope_macro[:body] = call_macro(*scope_macro[:body].args)
-          end
           if scope_macro[:body].is_a?(Expression) && macro[:body].is_a?(Expression) && scope_macro[:body].operator == macro[:body].operator
             new_args = ( symbol == '<<' ) ?  scope_macro[:body].args + macro[:body].args : macro[:body].args + scope_macro[:body].args
             macro[:body] = Expression.new.send scope_macro[:body].operator, *new_args
           end
         end
         scope[token] = macro
-        [self, excluded]
+        excluded
       else
         scope[token] = macro
-        [self, excluded]
+        excluded
       end
     end
 

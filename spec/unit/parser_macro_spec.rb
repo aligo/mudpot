@@ -22,8 +22,11 @@ describe Mudpot::Parser do
       macro_def! a = 1
       macro_set! b = a!
       macro_set! c = b!
-      @[a!, b!, c!]
-    """).to ast([:list_list, 1, 1, 1])
+      macro_set! d do
+        b!
+      end
+      @[a!, b!, c!, d!]
+    """).to ast([:list_list, 1, 1, 1, nil])
   end
 
   it 'can parse set macro block' do
@@ -50,7 +53,22 @@ describe Mudpot::Parser do
       a!(nil, 3)
       a!(3)
     """).to ast([[:list_list, 1, 2], [:list_list, 1, 3], [:list_list, 3, 2]])
+  end
 
+  it 'can parse macro chain' do
+    expect("""
+      mdef! a (av = 1) do
+        av!
+      end
+      mdef! c (cv = 1) do
+        cv!
+      end
+      a!(a!(a!))
+      c!(a!(a!(a!(2))))
+    """).to ast([1, 2])
+  end
+
+  it 'can parse long macro chain' do
     expect("""
       mdef! a (v = 1) do
         v!
