@@ -49,17 +49,17 @@ module Mudpot
       macro_apply(_get(token), args, default)
     end
 
-    define_macro :macro_set, :mset do |token, macro, symbol = '=', params = nil|
-      _set(@scope,  token, macro, symbol, params)
+    define_macro :macro_set, :mset do |token, macro, symbol = '=', params = nil, block = nil|
+      _set(@scope,  token, macro, symbol, params, block)
     end
 
-    define_macro :macro_def, :mdef do |token, macro, symbol = '=', params = nil|
-      _set(@global, token, macro, symbol, params)
+    define_macro :macro_def, :mdef do |token, macro, symbol = '=', params = nil, block = nil|
+      _set(@global, token, macro, symbol, params, block)
     end
 
     define_macro :macro_apply, :mapply do |macro, args = [], default = nil|
       if macro
-        if macro[:params]
+        if macro[:block]
           new_scope = self.push
           macro[:params].each.with_index do |param, i|
             value = (args.is_a?(Hash) ? args[param[0]] : args[i]) || param[1]
@@ -95,8 +95,8 @@ module Mudpot
       @scope[token] || @global[token]
     end
 
-    def _set(scope, token, macro, symbol = '=', params = nil)
-      macro = { body: macro, params: params }.compact
+    def _set(scope, token, macro, symbol = '=', params = nil, block = nil)
+      macro = { body: macro, params: params, block: block }.compact
       case symbol
       when '||='
         scope[token] ||= macro
