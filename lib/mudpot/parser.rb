@@ -62,11 +62,16 @@ module Mudpot
       r['}']
     end
 
-    rule(:int => /[0-9]+/).as { |i| Integer(i) }
-    rule(:negative_int => /\-[0-9]+/).as { |i| Integer(i) }
+    rule(:_negative_int => /\-[0-9]+/)
+    rule(:_int => /[0-9]+/)
+
+    rule(:int) do |r|
+      r[:_int].as { |i| Integer(i) }
+      r[:_negative_int].as { |i| Integer(i) }
+    end
     rule(:float) do |r|
-      r[:int, '.', :int].as { |i, _, f| Float("#{i}.#{f}") }
-      r[:negative_int, '.', :int].as { |i, _, f| Float("-#{i.abs}.#{f}") }
+      r[:_int, '.', :_int].as { |i, _, f| Float("#{i}.#{f}") }
+      r[:_negative_int, '.', :_int].as { |i, _, f| Float("-#{i.to_i.abs}.#{f}") }
     end
     rule(:macro_token => /\w+!/)
     rule(:token => /\w+/)
@@ -150,7 +155,6 @@ module Mudpot
       r[:double_quoted_string]
       r[:nil]
       r[:int]
-      r[:negative_int]
       r[:float]
       r[:list]
       r[:hash]
