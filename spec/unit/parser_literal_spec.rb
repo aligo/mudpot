@@ -6,6 +6,7 @@ describe Mudpot::Parser do
     expect('0.1').to compiled(0.1)
     expect('0.01').to compiled(0.01)
     expect('-0.01').to compiled(-0.01)
+    expect('0.000000018').to compiled(0.000000018)
     expect('-0.1').to compiled(-0.1)
     expect('-99.1').to compiled(-99.1)
     expect("'string'").to compiled('string')

@@ -109,7 +109,7 @@ module Mudpot
       r[:hash_pair].as                            { |i|         i }
     end
 
-    rule(:regex => /\/(?:\\.|[^\/])*\//).as { |s| op.regex_regex s[1..-2] }
+    rule(:regex => /\/(?:\\.|[^\/\n\r])*\//).as { |s| op.regex_regex s[1..-2] }
 
     rule(:lambda) do |r|
       r['@', '->', :do_exprs].as                               { |_, _, exprs|                     op.lambda_lambda(exprs)}

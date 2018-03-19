@@ -21,6 +21,9 @@ describe Mudpot::Parser do
     expect("1 + 2 * 3").to compiled([200, 1, [202, 2, 3]])
     expect("(1 + 2) * 3").to compiled([202, [200, 1, 2], 3])
     expect("1 + 2 + 3").to compiled([200, [200, 1, 2], 3])
+
+
+    expect("$var1 / $var2\n$var3 / $var4").to compiled([[203, [120, 'var1'], [120, 'var2']], [203, [120, 'var3'], [120, 'var4']]])
   end
 
   it 'can parse compare operators' do
