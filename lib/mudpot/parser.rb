@@ -85,7 +85,8 @@ module Mudpot
 
     rule(:list_nth) do |r|
       r['[', :expr, ']'].as                        { |_, i, _|                    op.list_nth  nil, i }
-      r['[', :expr, ']', '=', :expr].as            { |_, i, _, _, value|          op.list_push nil, i, value }
+      r['[', ']', '=', :expr].as                   { |_, _, _, value|             op.list_push nil, value }
+      r['[', :expr, ']', '=', :expr].as            { |_, i, _, _, value|          op.list_replace nil, value, i }
     end
 
     rule(:hash) do |r|

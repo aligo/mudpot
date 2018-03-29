@@ -6,8 +6,9 @@ describe Mudpot::Parser do
     expect("$a[$2]").to compiled([502, [120, 'a'], [122, 2]])
     expect("$a[1][3]").to compiled([502, [502, [120, 'a'], 1], 3])
 
-    expect("@['this', 'is', 'list'][1] = $3").to compiled([505, [500, 'this', 'is', 'list'], 1, [122, 3]])
-    expect("$a[1] = $3").to compiled([505, [120, 'a'], 1, [122, 3]])
+    expect("@['this', 'is', 'list'][1] = $3").to compiled([506, [500, 'this', 'is', 'list'], [122, 3], 1])
+    expect("$b[] = $3").to compiled([505, [120, 'b'], [122, 3]])
+    expect("$a[1] = $3").to compiled([506, [120, 'a'], [122, 3], 1])
   end
 
   it 'can parse hash key' do
